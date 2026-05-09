@@ -84,12 +84,12 @@ $locations_result = mysqli_query($conn, $locations_query);
                 <label>📂 Category *</label>
                 <select name="category" required>
                     <option value="">Select Category</option>
-                    <option>💡 Electrical (lights, outlets, fans, ACU)</option>
-                    <option>🪑 Furniture (chairs, tables, cabinets)</option>
-                    <option>💻 IT Equipment (computers, projectors, printers)</option>
-                    <option>🚽 Plumbing (faucets, toilets, pipes)</option>
-                    <option>🏗️ Structural (walls, ceilings, floors)</option>
-                    <option>📚 Other Facilities</option>
+                    <option> Electrical (lights, outlets, fans, ACU)</option>
+                    <option> Furniture (chairs, tables, cabinets)</option>
+                    <option> IT Equipment (computers, projectors, printers)</option>
+                    <option> Plumbing (faucets, toilets, pipes)</option>
+                    <option> Structural (walls, ceilings, floors)</option>
+                    <option> Other Facilities</option>
                 </select>
             </div>
             

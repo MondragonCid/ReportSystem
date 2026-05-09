@@ -140,13 +140,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <label>Department</label>
             <input type="text" name="department" value="<?php echo htmlspecialchars($department); ?>" placeholder="e.g., Registrar, Finance">
             
-            <button type="submit" class="btn">✅ Create Admin</button>
+            <button type="submit" class="btn"> Create Admin</button>
             <a href="index.php" class="btn btn-secondary">Cancel</a>
         </form>
         
         <hr>
         <div class="info-box">
-            <strong>💡 Tip:</strong> To create another admin, use different credentials:<br>
+            <strong> Tip:</strong> To create another admin, use different credentials:<br>
             Example: First: Juan, Last: Santos, Username: juan.santos, Admin ID: ADM002
         </div>
     </div>
