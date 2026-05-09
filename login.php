@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <body>
     <div class="container" style="max-width: 500px; margin: 50px auto;">
         <div style="text-align: center; margin-bottom: 30px;">
-            <h1>🏫 CEBU INSTITUTE OF TECHNOLOGY</h1>
+            <h1> CEBU INSTITUTE OF TECHNOLOGY</h1>
             <h2>UNIVERSITY</h2>
             <h3>Damage Reporting System</h3>
         </div>
@@ -89,13 +89,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         <form method="POST" action="">
             <div class="form-group">
-                <label>📧 Email or Username</label>
+                <label> Email or Username</label>
                 <input type="text" name="email_or_username" 
                        placeholder="juan.delacruz@cit.edu or username" required>
             </div>
             
             <div class="form-group">
-                <label>🔒 Password</label>
+                <label> Password</label>
                 <input type="password" name="password" required>
             </div>
             
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
         
         <div style="margin-top: 20px; text-align: center; font-size: 12px;">
-            <p>⚠️ For authorized CIT University personnel only</p>
+            <p> For authorized CIT University personnel only</p>
             <p>Contact IT Department for account assistance</p>
         </div>
         

@@ -27,10 +27,10 @@ $result = mysqli_query($conn, $query);
 </head>
 <body>
     <div class="container">
-        <h1>👑 Admin Management (CRUD Testing)</h1>
+        <h1>Admin Management (CRUD Testing)</h1>
         
         <div style="margin: 20px 0;">
-            <a href="create.php" class="btn">➕ CREATE New Admin</a>
+            <a href="create.php" class="btn">CREATE New Admin</a>
             <a href="../dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
         </div>
         

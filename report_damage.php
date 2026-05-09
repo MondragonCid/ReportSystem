@@ -24,9 +24,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (mysqli_query($conn, $query)) {
             $report_id = mysqli_insert_id($conn);
-            $success = "✅ Report submitted successfully! Reference #: " . $report_id;
+            $success = " Report submitted successfully! Reference #: " . $report_id;
         } else {
-            $error = "❌ Failed to submit report: " . mysqli_error($conn);
+            $error = " Failed to submit report: " . mysqli_error($conn);
         }
     }
 }
@@ -45,10 +45,10 @@ $locations_result = mysqli_query($conn, $locations_query);
 </head>
 <body>
     <div class="container">
-        <h1>📝 Report Damage / Issue</h1>
+        <h1> Report Damage / Issue</h1>
         
         <div class="info-box">
-            <strong>📧 Reporter Information</strong><br>
+            <strong> Reporter Information</strong><br>
             Name: <?php echo htmlspecialchars($_SESSION['fullname']); ?><br>
             Email: <?php echo htmlspecialchars($_SESSION['email']); ?><br>
             User Type: <?php echo ucfirst($_SESSION['user_type']); ?>
@@ -64,7 +64,7 @@ $locations_result = mysqli_query($conn, $locations_query);
         
         <form method="POST" action="">
             <div class="form-group">
-                <label>📍 Location *</label>
+                <label> Location *</label>
                 <select name="location_id" required>
                     <option value="">Select Building & Room</option>
                     <?php while($loc = mysqli_fetch_assoc($locations_result)): ?>
@@ -76,7 +76,7 @@ $locations_result = mysqli_query($conn, $locations_query);
             </div>
             
             <div class="form-group">
-                <label>📂 Category *</label>
+                <label> Category *</label>
                 <select name="category" required>
                     <option value="">Select Category</option>
                     <option>Electrical (lights, outlets, fans, ACU)</option>
@@ -95,7 +95,7 @@ $locations_result = mysqli_query($conn, $locations_query);
                 <small>Max 500 characters</small>
             </div>
             
-            <button type="submit" class="btn">✅ Submit Report</button>
+            <button type="submit" class="btn"> Submit Report</button>
             <a href="dashboard.php" class="btn btn-secondary">Cancel</a>
         </form>
     </div>

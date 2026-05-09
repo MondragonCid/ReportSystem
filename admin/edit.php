@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </head>
 <body>
     <div class="container">
-        <h1>✏️ EDIT Administrator</h1>
+        <h1> EDIT Administrator</h1>
         
         <?php if ($success): ?>
             <div class="alert alert-success">✅ <?php echo $success; ?></div>
@@ -109,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php if (!empty($errors)): ?>
             <div class="alert alert-danger">
                 <?php foreach($errors as $error): ?>
-                    ❌ <?php echo $error; ?><br>
+                     <?php echo $error; ?><br>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>

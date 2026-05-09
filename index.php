@@ -12,23 +12,23 @@ include 'includes/navbar.php';
 </head>
 <body>
     <div class="container">
-        <h1>🏫 CEBU INSTITUTE OF TECHNOLOGY - UNIVERSITY</h1>
+        <h1> CEBU INSTITUTE OF TECHNOLOGY - UNIVERSITY</h1>
         <h2>Damage Reporting System</h2>
         
         <hr>
         
         <?php if (isset($_SESSION['user_id'])): ?>
             <div class="alert alert-success">
-                ✅ Welcome back, <?php echo htmlspecialchars($_SESSION['fullname']); ?>!
+                 Welcome back, <?php echo htmlspecialchars($_SESSION['fullname']); ?>!
                 <br>You are logged in as: <strong><?php echo ucfirst($_SESSION['user_type']); ?></strong>
             </div>
             
             <div style="margin: 20px 0;">
-                <a href="dashboard.php" class="btn">📊 Go to Dashboard</a>
-                <a href="report_damage.php" class="btn">📝 Report New Damage</a>
-                <a href="my_reports.php" class="btn">📋 View My Reports</a>
+                <a href="dashboard.php" class="btn"> Go to Dashboard</a>
+                <a href="report_damage.php" class="btn"> Report New Damage</a>
+                <a href="my_reports.php" class="btn"> View My Reports</a>
                 <?php if ($_SESSION['user_type'] == 'admin'): ?>
-                    <a href="admin/index.php" class="btn">👑 Manage Admins</a>
+                    <a href="admin/index.php" class="btn"> Manage Admins</a>
                 <?php endif; ?>
             </div>
             
@@ -39,7 +39,7 @@ include 'includes/navbar.php';
             </div>
             
             <div style="margin: 20px 0;">
-                <a href="login.php" class="btn">🔐 Login to System</a>
+                <a href="login.php" class="btn"> Login to System</a>
             </div>
             
             <hr>
@@ -53,13 +53,13 @@ include 'includes/navbar.php';
                     <th>Email</th>
                 </tr>
                 <tr>
-                    <td>👑 Admin</td>
+                    <td> Admin</td>
                     <td>admin.cit</td>
                     <td>admin123</td>
                     <td>admin@cit.edu</td>
                 </tr>
                 <tr>
-                    <td>👨‍🏫 Employee</td>
+                    <td> Employee</td>
                     <td>john.smith</td>
                     <td>admin123</td>
                     <td>john.smith@cit.edu</td>
