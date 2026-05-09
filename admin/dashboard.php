@@ -24,7 +24,8 @@ $reports_query = "SELECT dr.*,
                   CONCAT(u.FirstName, ' ', u.LastName) as ReporterName,
                   u.Email as ReporterEmail,
                   CONCAT(l.BuildingName, ' - ', l.ClassRoomNum) as LocationName,
-                  CONCAT(s.FirstName, ' ', s.LastName) as StaffName
+                  CONCAT(s.FirstName, ' ', s.LastName) as StaffName,
+                  s.UserID as StaffUserID
                   FROM damage_report dr
                   JOIN user u ON dr.ReporterID = u.UserID
                   JOIN location l ON dr.LocationID = l.LocationID
@@ -33,36 +34,46 @@ $reports_query = "SELECT dr.*,
                   ORDER BY dr.DateReported DESC";
 $reports_result = mysqli_query($conn, $reports_query);
 
-// Get staff list for assignment
+// Get staff list for assignment (using UserID from maintainance_staff)
 $staff_query = "SELECT ms.UserID, CONCAT(u.FirstName, ' ', u.LastName) as StaffName, ms.Specialization
                 FROM maintainance_staff ms
-                JOIN user u ON ms.UserID = u.UserID";
+                JOIN user u ON ms.UserID = u.UserID
+                WHERE u.IsActive = 1";
 $staff_result = mysqli_query($conn, $staff_query);
 $staff_list = [];
 while ($staff = mysqli_fetch_assoc($staff_result)) {
     $staff_list[] = $staff;
 }
 
-// Handle status update
+// Handle status update and staff assignment
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     $report_id = mysqli_real_escape_string($conn, $_POST['report_id']);
     $new_status = mysqli_real_escape_string($conn, $_POST['status']);
-    $staff_id = !empty($_POST['staff_id']) ? mysqli_real_escape_string($conn, $_POST['staff_id']) : 'NULL';
+    $staff_id = $_POST['staff_id'];
     
+    // Start building the update query
     $update_query = "UPDATE damage_report SET Status = '$new_status'";
     
+    // Handle resolved date
     if ($new_status == 'resolved') {
         $update_query .= ", DateResolved = NOW()";
+    } else {
+        $update_query .= ", DateResolved = NULL";
     }
     
-    if ($staff_id != 'NULL') {
-        $update_query .= ", StaffID = $staff_id";
+    // Handle staff assignment (FIXED: proper NULL handling)
+    if (!empty($staff_id) && $staff_id != '') {
+        $update_query .= ", StaffID = '$staff_id'";
+    } else {
+        $update_query .= ", StaffID = NULL";
     }
     
     $update_query .= " WHERE ReportID = '$report_id'";
     
+    // Debug: uncomment to see the query
+    // echo "<pre>$update_query</pre>";
+    
     if (mysqli_query($conn, $update_query)) {
-        $success = "Report #$report_id updated successfully!";
         header("Location: dashboard.php?msg=updated");
         exit();
     } else {
@@ -129,21 +140,39 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
         }
         .badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
             font-weight: bold;
         }
         .badge-pending { background: #f39c12; color: white; }
         .badge-progress { background: #3498db; color: white; }
+        .badge-in-progress { background: #3498db; color: white; }
         .badge-resolved { background: #27ae60; color: white; }
         .badge-cancelled { background: #e74c3c; color: white; }
         .btn-sm {
             padding: 5px 10px;
             font-size: 12px;
+            margin: 2px;
         }
         .action-cell {
-            min-width: 150px;
+            min-width: 180px;
+        }
+        .assigned-staff {
+            background: #d4edda;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-size: 11px;
+            display: inline-block;
+        }
+        .unassigned {
+            color: #999;
+            font-style: italic;
+        }
+        .staff-select {
+            margin-top: 5px;
+            padding: 5px;
+            font-size: 12px;
         }
     </style>
 </head>
@@ -225,9 +254,9 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                 <?php if (mysqli_num_rows($reports_result) > 0): ?>
                     <?php while($report = mysqli_fetch_assoc($reports_result)): ?>
                         <tr class="report-row" data-status="<?php echo $report['Status']; ?>">
-                            <td>#<?php echo $report['ReportID']; ?></td>
+                            <td><strong>#<?php echo $report['ReportID']; ?></strong></td>
                             <td>
-                                <strong><?php echo htmlspecialchars($report['ReporterName']); ?></strong><br>
+                                <?php echo htmlspecialchars($report['ReporterName']); ?><br>
                                 <small><?php echo htmlspecialchars($report['ReporterEmail']); ?></small>
                             </td>
                             <td><?php echo htmlspecialchars($report['LocationName']); ?></td>
@@ -236,46 +265,64 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                                 <?php echo htmlspecialchars(substr($report['Description'], 0, 50)); ?>
                                 <?php if(strlen($report['Description']) > 50): ?>...<?php endif; ?>
                             </td>
-                            <td><?php echo date('M d, Y', strtotime($report['DateReported'])); ?></td>
-                            <td>
+                            <td><?php echo date('M d, Y', strtotime($report['DateReported'])); ?></d>
+                            <d>
                                 <?php if($report['StaffName']): ?>
-                                    <?php echo htmlspecialchars($report['StaffName']); ?>
+                                    <span class="assigned-staff">
+                                        ✅ <?php echo htmlspecialchars($report['StaffName']); ?>
+                                    </span>
                                 <?php else: ?>
-                                    <span style="color: #999;">Unassigned</span>
+                                    <span class="unassigned">❌ Not assigned</span>
                                 <?php endif; ?>
-                            </td>
-                            <td>
+                            </d>
+                            <d>
                                 <span class="badge badge-<?php echo $report['Status'] == 'in-progress' ? 'progress' : $report['Status']; ?>">
-                                    <?php echo ucfirst($report['Status']); ?>
+                                    <?php 
+                                    $status_display = [
+                                        'pending' => '⏳ Pending',
+                                        'in-progress' => '🔄 In Progress',
+                                        'resolved' => '✅ Resolved',
+                                        'cancelled' => '❌ Cancelled'
+                                    ];
+                                    echo $status_display[$report['Status']] ?? ucfirst($report['Status']);
+                                    ?>
                                 </span>
-                            </td>
+                            </d>
                             <td class="action-cell">
                                 <form method="POST" action="" style="display: inline-block;">
                                     <input type="hidden" name="report_id" value="<?php echo $report['ReportID']; ?>">
-                                    <select name="status" class="status-select">
-                                        <option value="pending" <?php echo $report['Status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                        <option value="in-progress" <?php echo $report['Status'] == 'in-progress' ? 'selected' : ''; ?>>In Progress</option>
-                                        <option value="resolved" <?php echo $report['Status'] == 'resolved' ? 'selected' : ''; ?>>Resolved</option>
-                                        <option value="cancelled" <?php echo $report['Status'] == 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                    
+                                    <select name="status" class="staff-select" style="width: 120px;">
+                                        <option value="pending" <?php echo $report['Status'] == 'pending' ? 'selected' : ''; ?>>⏳ Pending</option>
+                                        <option value="in-progress" <?php echo $report['Status'] == 'in-progress' ? 'selected' : ''; ?>>🔄 In Progress</option>
+                                        <option value="resolved" <?php echo $report['Status'] == 'resolved' ? 'selected' : ''; ?>>✅ Resolved</option>
+                                        <option value="cancelled" <?php echo $report['Status'] == 'cancelled' ? 'selected' : ''; ?>>❌ Cancelled</option>
                                     </select>
-                                    <select name="staff_id" style="margin-top: 5px;">
-                                        <option value="">Assign Staff</option>
+                                    
+                                    <select name="staff_id" class="staff-select" style="width: 130px;">
+                                        <option value="">-- Assign Staff --</option>
                                         <?php foreach($staff_list as $staff): ?>
-                                            <option value="<?php echo $staff['UserID']; ?>">
-                                                <?php echo htmlspecialchars($staff['StaffName']); ?>
+                                            <option value="<?php echo $staff['UserID']; ?>"
+                                                <?php echo ($report['StaffUserID'] == $staff['UserID']) ? 'selected' : ''; ?>>
+                                                🔧 <?php echo htmlspecialchars($staff['StaffName']); ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
-                                    <button type="submit" name="update_status" class="btn-sm">Update</button>
+                                    
+                                    <button type="submit" name="update_status" class="btn-sm" style="background: #28a745;">Save</button>
                                 </form>
+                                
                                 <a href="?delete=<?php echo $report['ReportID']; ?>" class="btn-sm btn-danger" 
-                                   onclick="return confirm('Delete report #<?php echo $report['ReportID']; ?>?')">Delete</a>
+                                   onclick="return confirm('Delete report #<?php echo $report['ReportID']; ?>?')" 
+                                   style="background: #dc3545; color: white; text-decoration: none; display: inline-block; text-align: center;">
+                                    🗑️ Delete
+                                </a>
                             </td>
                         </tr>
                     <?php endwhile; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="9" style="text-align: center;">No reports found</td>
+                        <td colspan="9" style="text-align: center;">📭 No reports found</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
