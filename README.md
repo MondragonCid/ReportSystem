@@ -20,9 +20,9 @@ A web-based damage reporting system for Cebu Institute of Technology - Universit
 ### Installation
 
 1. Start XAMPP (Apache + MySQL)
-2. Clone/copy project to: `C:\xampp\htdocs\cit_reporting_system`
-3. Import database from `sql/cit_reporting_system.sql` using phpMyAdmin
-4. Access: `http://localhost/cit_reporting_system`
+2. Clone/copy project to: `C:\xampp\htdocs\ReportSystem`
+3. Import database from `sql/ReportSystem.sql` using phpMyAdmin
+4. Access: `http://localhost/ReportSystem`
 
 ### Test Credentials
 
@@ -165,7 +165,7 @@ onclick="return confirm('Delete this item?')"
 Testing
 Start XAMPP (Apache + MySQL)
 
-Access: http://localhost/cit_reporting_system
+Access: http://localhost/ReportSystem
 
 Login with test credentials
 
