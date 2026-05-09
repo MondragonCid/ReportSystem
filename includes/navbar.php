@@ -4,6 +4,9 @@ $base_path = '';
 if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) {
     $base_path = '../';
 }
+if (strpos($_SERVER['PHP_SELF'], '/locations/') !== false) {
+    $base_path = '../';
+}
 ?>
 
 <div class="navbar">
@@ -14,7 +17,8 @@ if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) {
         <a href="<?php echo $base_path; ?>report_damage.php">📝 Report Damage</a>
         <a href="<?php echo $base_path; ?>my_reports.php">📋 My Reports</a>
         <?php if ($_SESSION['user_type'] == 'admin'): ?>
-            <a href="<?php echo $base_path; ?>admin/index.php">👑 Admin CRUD</a>
+            <a href="<?php echo $base_path; ?>admin/index.php">👑 Manage Admins</a>
+            <a href="<?php echo $base_path; ?>locations/index.php">📍 Manage Locations</a>
         <?php endif; ?>
         <span style="margin-left: auto;">👤 <?php echo $_SESSION['username']; ?></span>
         <a href="<?php echo $base_path; ?>logout.php">🚪 Logout</a>
