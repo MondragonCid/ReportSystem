@@ -1,3 +1,5 @@
 <?php
-echo "and shitttt! Its working";
+echo "and shitttt! Its working\n";
+
+echo "look atthis testing";
 ?>
