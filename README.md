@@ -177,4 +177,12 @@ Version
 License
 CIT University - Educational Project
 
-This is clean, professional, and treats both developers as equal team members!
+TEST FILES :
+
+create_password.php
+fix_password.php
+register_admin.php
+test_login.php
+test_password.php
+staff_dashboard.php
+admin/reports.php
