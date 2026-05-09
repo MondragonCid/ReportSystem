@@ -47,10 +47,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['fullname'] = $user['FirstName'] . ' ' . $user['LastName'];
             $_SESSION['email'] = $user['Email'];
             
+            // Redirect based on user type
             if ($user['UserType'] == 'admin') {
                 header("Location: admin/index.php");
             } else {
-                header("Location: dashboard.php");
+                // Students and employees go to reporting page
+                header("Location: report_damage.php");
             }
             exit();
         } else {
@@ -71,51 +73,64 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-    <div class="container" style="max-width: 500px; margin: 50px auto;">
-        <div style="text-align: center; margin-bottom: 30px;">
-            <h1> CEBU INSTITUTE OF TECHNOLOGY</h1>
-            <h2>UNIVERSITY</h2>
-            <h3>Damage Reporting System</h3>
-        </div>
-        
-        <div class="info-box" style="text-align: center;">
-            <p>🔐 Login using your CIT University credentials</p>
-            <small>Email format: firstname.lastname@cit.edu</small>
-        </div>
-        
-        <?php if ($error): ?>
-            <div class="alert alert-danger"><?php echo $error; ?></div>
-        <?php endif; ?>
-        
-        <form method="POST" action="">
-            <div class="form-group">
-                <label> Email or Username</label>
-                <input type="text" name="email_or_username" 
-                       placeholder="juan.delacruz@cit.edu or username" required>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="cit-logo">
+                <h1>🏫 CEBU INSTITUTE OF TECHNOLOGY</h1>
+                <h2>UNIVERSITY</h2>
+                <h3>Damage Reporting System</h3>
             </div>
             
-            <div class="form-group">
-                <label> Password</label>
-                <input type="password" name="password" required>
+            <div class="login-info">
+                <p>🔐 Login using your CIT University credentials</p>
+                <small>Email format: firstname.lastname@cit.edu</small>
             </div>
             
-            <button type="submit" style="width: 100%;">Login to System</button>
-        </form>
-        
-        <div style="margin-top: 20px; text-align: center; font-size: 12px;">
-            <p> For authorized CIT University personnel only</p>
-            <p>Contact IT Department for account assistance</p>
-        </div>
-        
-        <hr>
-        
-        <div style="margin-top: 20px;">
-            <h4>Test Accounts:</h4>
-            <ul>
-                <li><strong>Admin:</strong> admin.cit / admin123</li>
-                <li><strong>Employee:</strong> john.smith / admin123</li>
-                <li><strong>Staff:</strong> mike.staff / admin123</li>
-            </ul>
+            <?php if ($error): ?>
+                <div class="alert alert-danger"><?php echo $error; ?></div>
+            <?php endif; ?>
+            
+            <form method="POST" action="">
+                <div class="form-group">
+                    <label>📧 Email or Username</label>
+                    <input type="text" name="email_or_username" 
+                           placeholder="juan.delacruz@cit.edu or username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>🔒 Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                
+                <button type="submit" class="btn-login">Login to System</button>
+            </form>
+            
+            <div style="margin-top: 20px; text-align: center; font-size: 12px; color: #7f8c8d;">
+                <p>⚠️ For authorized CIT University personnel only</p>
+                <p>Contact IT Department for account assistance</p>
+            </div>
+            
+            <!-- Test Accounts Section -->
+            <hr style="margin: 20px 0;">
+            <div style="font-size: 12px;">
+                <p><strong>📋 Test Accounts:</strong></p>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li><strong>👑 Admin</strong> (Can see dashboard & manage)</li>
+                    <li style="margin-left: 15px;">Username: admin.cit / Password: admin123</li>
+                    <li style="margin-top: 5px;"><strong>🔧 Staff</strong> (Maintenance - Can see dashboard)</li>
+                    <li style="margin-left: 15px;">Username: mike.staff / Password: admin123</li>
+                    <li style="margin-top: 5px;"><strong>👨‍🎓 Student / Employee</strong> (Can ONLY submit reports)</li>
+                    <li style="margin-left: 15px;">Username: juana.delacruz / Password: admin123</li>
+                    <li style="margin-left: 15px;">Username: john.smith / Password: admin123</li>
+                </ul>
+                <hr style="margin: 10px 0;">
+                <p><strong>⚠️ User Access Levels:</strong></p>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>👑 <strong>Admin</strong> → Admin Dashboard (CRUD, Reports, Staff)</li>
+                    <li>🔧 <strong>Staff</strong> → Staff Dashboard (Assignments, Updates)</li>
+                    <li>👨‍🎓 <strong>Student/Employee</strong> → Submit Reports, Track Status</li>
+                </ul>
+            </div>
         </div>
     </div>
 </body>
