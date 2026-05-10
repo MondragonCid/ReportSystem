@@ -20,12 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_type'] = $user['UserType'];
             $_SESSION['fullname'] = $user['FirstName'] . ' ' . $user['LastName'];
             
-            // Redirect based on user type
             if ($user['UserType'] == 'admin') {
                 header("Location: admin/index.php");
             } else {
-                // Students and employees go to reporting page
-                header("Location: report_damage.php");
+                header("Location: dashboard.php");
             }
             exit();
         } else {
@@ -168,51 +166,59 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </style>
 </head>
 <body>
-    <div class="container" style="max-width: 500px; margin: 50px auto;">
-        <div style="text-align: center; margin-bottom: 30px;">
-            <h1> CEBU INSTITUTE OF TECHNOLOGY</h1>
-            <h2>UNIVERSITY</h2>
-            <h3>Damage Reporting System</h3>
-        </div>
-        
-        <div class="info-box" style="text-align: center;">
-            <p>🔐 Login using your CIT University credentials</p>
-            <small>Email format: firstname.lastname@cit.edu</small>
-        </div>
-        
+
+    <div class="header-logo">
+        <img src="citu_logo.png" alt="CIT Logo">
+        <h1>CIT University<br>Fault Report System</h1>
+    </div>
+
+    <div class="login-container">
+        <p class="instructions">Login using your CIT University credentials to access the Fault Report System.</p>
+
         <?php if ($error): ?>
-            <div class="alert alert-danger"><?php echo $error; ?></div>
+            <div class="alert"><?php echo $error; ?></div>
         <?php endif; ?>
         
-        <form method="POST" action="">
+        <form action="login.php" method="POST">
             <div class="form-group">
-                <label> Email or Username</label>
-                <input type="text" name="email_or_username" 
-                       placeholder="juan.delacruz@cit.edu or username" required>
+                <label for="email">Email or Username:</label>
+                <input type="text" id="email" name="email_or_username" placeholder="juan.delacruz@cit.edu" required>
             </div>
             
             <div class="form-group">
-                <label> Password</label>
-                <input type="password" name="password" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" placeholder="Password" required>
             </div>
             
-            <button type="submit" style="width: 100%;">Login to System</button>
+            <div class="button-group">
+                <button type="reset" class="btn btn-clear">CLEAR ENTRIES</button>
+                <button type="submit" class="btn btn-login">LOGIN</button>
+            </div>
         </form>
-        
-        <div style="margin-top: 20px; text-align: center; font-size: 12px;">
-            <p> For authorized CIT University personnel only</p>
-            <p>Contact IT Department for account assistance</p>
+
+        <div class="footer-links">
+            Forgot Password? <a href="#">Click here</a>
         </div>
-        
-        <hr>
-        
-        <div style="margin-top: 20px;">
+
+        <div class="inquiries">
+            For authorized CIT University personnel only<br>
+            Contact IT Department for account assistance<br>
+        </div>
+
+        <!-- Integrated Test Accounts section from your image -->
+        <div class="test-accounts">
             <h4>Test Accounts:</h4>
             <ul>
                 <li><strong>Admin:</strong> admin.cit / admin123</li>
                 <li><strong>Employee:</strong> john.smith / admin123</li>
                 <li><strong>Staff:</strong> mike.staff / admin123</li>
             </ul>
+
+            <p><strong> User Access Levels:</strong></p>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li> <strong>Admin</strong> → Admin Dashboard (CRUD, Reports, Staff)</li>
+                    <li> <strong>Staff</strong> → Staff Dashboard (Assignments, Updates)</li>
+                    <li><strong>Student/Employee</strong> → Submit Reports, Track Status</li>
         </div>
     </div>
 

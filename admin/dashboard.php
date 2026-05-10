@@ -95,240 +95,166 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard - CIT University</title>
-    <link rel="stylesheet" href="../assets/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - CIT Damage Reporting</title>
     <style>
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .stat-card h3 {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        .stat-number {
-            font-size: 36px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
+        /* BASE & SIDEBAR STYLES (From index.php) */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, html { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9f9f9; }
+        .main-wrapper { display: flex; min-height: 100vh; }
+
+        .sidebar { width: 250px; background-color: #800000; color: white; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+        .sidebar-brand { padding: 25px; font-weight: bold; font-size: 14px; text-align: center; background-color: #600000; }
+        .nav-item { padding: 15px 20px; color: white; text-decoration: none; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background-color: #a00000; padding-left: 30px; }
+        .nav-item.logout-btn { margin-top: auto; background-color: rgba(0,0,0,0.2); }
+
+        /* CONTENT AREA */
+        .content-area { flex: 1; padding: 40px; overflow-y: auto; }
+        .header-container { display: flex; align-items: center; margin-bottom: 5px; }
+        .logo { height: 60px; margin-right: 15px; } 
+        .header-text h1 { color: #800000; font-size: 24px; text-transform: uppercase; margin: 0; }
+        .red-line { border: 0; height: 3px; background-color: #800000; margin: 15px 0 25px 0; }
+
+        /* YOUR STATS CARDS CSS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        .stat-number { font-size: 32px; font-weight: bold; color: #2c3e50; }
         .stat-card.pending .stat-number { color: #f39c12; }
         .stat-card.progress .stat-number { color: #3498db; }
         .stat-card.resolved .stat-number { color: #27ae60; }
-        .filter-bar {
-            background: #f8f9fa;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .filter-bar input, .filter-bar select {
-            width: auto;
-            margin: 0;
-            padding: 8px;
-        }
-        .badge {
-            display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .badge-pending { background: #f39c12; color: white; }
-        .badge-progress { background: #3498db; color: white; }
-        .badge-in-progress { background: #3498db; color: white; }
-        .badge-resolved { background: #27ae60; color: white; }
-        .badge-cancelled { background: #e74c3c; color: white; }
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 12px;
-            margin: 2px;
-        }
-        .action-cell {
-            min-width: 180px;
-        }
-        .assigned-staff {
-            background: #d4edda;
-            padding: 3px 8px;
-            border-radius: 15px;
-            font-size: 11px;
-            display: inline-block;
-        }
-        .unassigned {
-            color: #999;
-            font-style: italic;
-        }
-        .staff-select {
-            margin-top: 5px;
-            padding: 5px;
-            font-size: 12px;
-        }
+
+        /* TABLE & FILTERS CSS */
+        .filter-bar { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; display: flex; gap: 10px; border: 1px solid #ddd; }
+        .filter-bar input, .filter-bar select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .data-table th { background: #f8f9fa; padding: 15px; text-align: left; border-bottom: 2px solid #eee; }
+        .data-table td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; }
+        .badge-pending { background: #f39c12; }
+        .badge-progress { background: #3498db; }
+        .badge-resolved { background: #27ae60; }
+        .badge-cancelled { background: #e74c3c; }
+
+        .btn-save { background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-delete { background: #dc3545; color: white; text-decoration: none; padding: 8px 12px; border-radius: 4px; font-size: 12px; }
+
+        .main-footer { background-color: #333; color: white; text-align: center; padding: 20px; font-size: 13px; margin-top: 40px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>👑 Admin Dashboard</h1>
-        <p>Welcome, <?php echo htmlspecialchars($_SESSION['fullname']); ?>! Manage and track all damage reports.</p>
-        
-        <hr>
-        
-        <?php if (isset($_GET['msg'])): ?>
-            <?php if ($_GET['msg'] == 'updated'): ?>
-                <div class="alert alert-success">✅ Report updated successfully!</div>
-            <?php elseif ($_GET['msg'] == 'deleted'): ?>
-                <div class="alert alert-success">✅ Report deleted successfully!</div>
-            <?php endif; ?>
-        <?php endif; ?>
-        
-        <?php if (isset($error)): ?>
-            <div class="alert alert-danger">❌ <?php echo $error; ?></div>
-        <?php endif; ?>
-        
-        <!-- Statistics Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>📋 Total Reports</h3>
-                <div class="stat-number"><?php echo $stats['total_reports'] ?? 0; ?></div>
+
+    <div class="main-wrapper">
+        <nav class="sidebar">
+            <div class="sidebar-brand">ADMIN PANEL</div>
+            <a href="<?= $base_path ?>index.php" class="nav-item">Home</a>
+            <a href="dashboard.php" class="nav-item active">Dashboard</a>
+            <a href="index.php" class="nav-item">Manage Admins</a>
+            <a href="<?= $base_path ?>locations/index.php" class="nav-item">Manage Locations</a>
+            <a href="<?= $base_path ?>logout.php" class="nav-item logout-btn">Logout</a>
+        </nav>
+
+        <main class="content-area">
+            <div class="header-container">
+                <img src="<?= $base_path ?>citu_logo.png" alt="CIT-U Logo" class="logo">
+                <div class="header-text">
+                    <h1>Admin Dashboard</h1>
+                    <p>Welcome, <?= htmlspecialchars($_SESSION['fullname']); ?>! System Overview</p>
+                </div>
             </div>
-            <div class="stat-card pending">
-                <h3>⏳ Pending</h3>
-                <div class="stat-number"><?php echo $stats['pending'] ?? 0; ?></div>
+            <hr class="red-line">
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📋 Total</h3>
+                    <div class="stat-number"><?php echo $stats['total_reports'] ?? 0; ?></div>
+                </div>
+                <div class="stat-card pending">
+                    <h3>⏳ Pending</h3>
+                    <div class="stat-number"><?php echo $stats['pending'] ?? 0; ?></div>
+                </div>
+                <div class="stat-card progress">
+                    <h3>🔄 In Progress</h3>
+                    <div class="stat-number"><?php echo $stats['in_progress'] ?? 0; ?></div>
+                </div>
+                <div class="stat-card resolved">
+                    <h3>✅ Resolved</h3>
+                    <div class="stat-number"><?php echo $stats['resolved'] ?? 0; ?></div>
+                </div>
             </div>
-            <div class="stat-card progress">
-                <h3>🔄 In Progress</h3>
-                <div class="stat-number"><?php echo $stats['in_progress'] ?? 0; ?></div>
-            </div>
-            <div class="stat-card resolved">
-                <h3>✅ Resolved</h3>
-                <div class="stat-number"><?php echo $stats['resolved'] ?? 0; ?></div>
-            </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="info-box" style="margin-bottom: 20px;">
-            <strong>⚡ Quick Actions:</strong><br>
-            <a href="index.php" class="btn btn-sm">👑 Manage Admins</a>
-            <a href="../report_damage.php" class="btn btn-sm">📝 Submit Test Report</a>
-        </div>
-        
-        <!-- Reports Table -->
-        <h2>📋 All Damage Reports</h2>
-        
-        <div class="filter-bar">
-            <input type="text" id="searchInput" placeholder="🔍 Search by reporter, location, or category..." onkeyup="filterTable()">
-            <select id="statusFilter" onchange="filterTable()">
-                <option value="all">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="in-progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="cancelled">Cancelled</option>
-            </select>
-        </div>
-        
-        <table class="data-table" id="reportsTable">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Reporter</th>
-                    <th>Location</th>
-                    <th>Category</th>
-                    <th>Description</th>
-                    <th>Reported</th>
-                    <th>Assigned To</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (mysqli_num_rows($reports_result) > 0): ?>
-                    <?php while($report = mysqli_fetch_assoc($reports_result)): ?>
-                        <tr class="report-row" data-status="<?php echo $report['Status']; ?>">
-                            <td><strong>#<?php echo $report['ReportID']; ?></strong></td>
-                            <td>
-                                <?php echo htmlspecialchars($report['ReporterName']); ?><br>
-                                <small><?php echo htmlspecialchars($report['ReporterEmail']); ?></small>
-                            </td>
-                            <td><?php echo htmlspecialchars($report['LocationName']); ?></td>
-                            <td><?php echo htmlspecialchars($report['Category']); ?></td>
-                            <td>
-                                <?php echo htmlspecialchars(substr($report['Description'], 0, 50)); ?>
-                                <?php if(strlen($report['Description']) > 50): ?>...<?php endif; ?>
-                            </td>
-                            <td><?php echo date('M d, Y', strtotime($report['DateReported'])); ?></d>
-                            <d>
-                                <?php if($report['StaffName']): ?>
-                                    <span class="assigned-staff">
-                                        ✅ <?php echo htmlspecialchars($report['StaffName']); ?>
-                                    </span>
-                                <?php else: ?>
-                                    <span class="unassigned">❌ Not assigned</span>
-                                <?php endif; ?>
-                            </d>
-                            <d>
-                                <span class="badge badge-<?php echo $report['Status'] == 'in-progress' ? 'progress' : $report['Status']; ?>">
-                                    <?php 
-                                    $status_display = [
-                                        'pending' => '⏳ Pending',
-                                        'in-progress' => '🔄 In Progress',
-                                        'resolved' => '✅ Resolved',
-                                        'cancelled' => '❌ Cancelled'
-                                    ];
-                                    echo $status_display[$report['Status']] ?? ucfirst($report['Status']);
-                                    ?>
-                                </span>
-                            </d>
-                            <td class="action-cell">
-                                <form method="POST" action="" style="display: inline-block;">
-                                    <input type="hidden" name="report_id" value="<?php echo $report['ReportID']; ?>">
-                                    
-                                    <select name="status" class="staff-select" style="width: 120px;">
-                                        <option value="pending" <?php echo $report['Status'] == 'pending' ? 'selected' : ''; ?>>⏳ Pending</option>
-                                        <option value="in-progress" <?php echo $report['Status'] == 'in-progress' ? 'selected' : ''; ?>>🔄 In Progress</option>
-                                        <option value="resolved" <?php echo $report['Status'] == 'resolved' ? 'selected' : ''; ?>>✅ Resolved</option>
-                                        <option value="cancelled" <?php echo $report['Status'] == 'cancelled' ? 'selected' : ''; ?>>❌ Cancelled</option>
-                                    </select>
-                                    
-                                    <select name="staff_id" class="staff-select" style="width: 130px;">
-                                        <option value="">-- Assign Staff --</option>
-                                        <?php foreach($staff_list as $staff): ?>
-                                            <option value="<?php echo $staff['UserID']; ?>"
-                                                <?php echo ($report['StaffUserID'] == $staff['UserID']) ? 'selected' : ''; ?>>
-                                                🔧 <?php echo htmlspecialchars($staff['StaffName']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    
-                                    <button type="submit" name="update_status" class="btn-sm" style="background: #28a745;">Save</button>
-                                </form>
-                                
-                                <a href="?delete=<?php echo $report['ReportID']; ?>" class="btn-sm btn-danger" 
-                                   onclick="return confirm('Delete report #<?php echo $report['ReportID']; ?>?')" 
-                                   style="background: #dc3545; color: white; text-decoration: none; display: inline-block; text-align: center;">
-                                    🗑️ Delete
-                                </a>
-                            </td>
+
+            <div class="white-card-container" style="background: white; padding: 25px; border-radius: 10px; border: 1px solid #ddd;">
+                <h2>📋 All Damage Reports</h2>
+                <div class="filter-bar">
+                    <input type="text" id="searchInput" placeholder="🔍 Search reports..." onkeyup="filterTable()" style="flex: 1;">
+                    <select id="statusFilter" onchange="filterTable()">
+                        <option value="all">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+
+                <table class="data-table" id="reportsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Reporter</th>
+                            <th>Location</th>
+                            <th>Description</th>
+                            <th>Staff</th>
+                            <th>Status</th>
+                            <th>Actions</th>
                         </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="9" style="text-align: center;">📭 No reports found</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    </thead>
+                    <tbody>
+                        <?php if (mysqli_num_rows($reports_result) > 0): ?>
+                            <?php while($report = mysqli_fetch_assoc($reports_result)): ?>
+                                <tr class="report-row" data-status="<?php echo $report['Status']; ?>">
+                                    <td><strong>#<?php echo $report['ReportID']; ?></strong></td>
+                                    <td><?= htmlspecialchars($report['ReporterName']) ?></td>
+                                    <td><?= htmlspecialchars($report['LocationName']) ?></td>
+                                    <td><?= htmlspecialchars(substr($report['Description'], 0, 30)) ?>...</td>
+                                    <td>
+                                        <?php if($report['StaffName']): ?>
+                                            <span style="font-size: 12px; color: #2e7d32;">✅ <?= htmlspecialchars($report['StaffName']) ?></span>
+                                        <?php else: ?>
+                                            <span style="color: #999; font-style: italic;">Unassigned</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<?php echo $report['Status'] == 'in-progress' ? 'progress' : $report['Status']; ?>">
+                                            <?= ucfirst($report['Status']) ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" style="display: flex; gap: 5px;">
+                                            <input type="hidden" name="report_id" value="<?php echo $report['ReportID']; ?>">
+                                            <select name="status" style="font-size: 11px;">
+                                                <option value="pending" <?php echo $report['Status'] == 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                <option value="in-progress" <?php echo $report['Status'] == 'in-progress' ? 'selected' : ''; ?>>In Progress</option>
+                                                <option value="resolved" <?php echo $report['Status'] == 'resolved' ? 'selected' : ''; ?>>Resolved</option>
+                                            </select>
+                                            <button type="submit" name="update_status" class="btn-save">Save</button>
+                                            <a href="?delete=<?= $report['ReportID'] ?>" class="btn-delete" onclick="return confirm('Delete this?')">🗑️</a>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+            
+            <footer class="main-footer">
+                © 2026 Cebu Institute of Technology - University<br>
+                Admin Management System
+            </footer>
+        </main>
     </div>
-    
+
     <script>
         function filterTable() {
             const searchValue = document.getElementById('searchInput').value.toLowerCase();
@@ -338,19 +264,13 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
             rows.forEach(row => {
                 const text = row.innerText.toLowerCase();
                 const status = row.getAttribute('data-status');
-                
-                let matchesSearch = text.includes(searchValue);
-                let matchesStatus = statusValue === 'all' || status === statusValue;
-                
-                if (matchesSearch && matchesStatus) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                const matchesSearch = text.includes(searchValue);
+                const matchesStatus = statusValue === 'all' || status === statusValue;
+                row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
             });
         }
     </script>
 </body>
 </html>
 
-<?php include '../includes/footer.php'; ?>
+<!-- <?php include '../includes/footer.php'; ?> -->
