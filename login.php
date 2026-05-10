@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_type'] = $user['UserType'];
             $_SESSION['fullname'] = $user['FirstName'] . ' ' . $user['LastName'];
             
-            if ($user['UserType'] == 'admin') {
-                header("Location: admin/index.php");
+            if ($user["UserType"] == "admin") {
+                header("Location: admin/dashboard.php");
             } else {
                 header("Location: dashboard.php");
             }
@@ -212,6 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <li><strong>Admin:</strong> admin.cit / admin123</li>
                 <li><strong>Employee:</strong> john.smith / admin123</li>
                 <li><strong>Staff:</strong> mike.staff / admin123</li>
+                <li><strong>Student:</strong> juan.student / admin123</li>
             </ul>
 
             <p><strong> User Access Levels:</strong></p>

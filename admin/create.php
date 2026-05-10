@@ -2,72 +2,98 @@
 require_once '../config/database.php';
 require_once '../includes/validation.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+if (session_status() === PHP_SESSION_NONE) session_start();
 
-// Security Check
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'admin') {
     header("Location: ../login.php");
     exit();
 }
 
-$first_name = $last_name = $username = $admin_id = $department = '';
-$errors = [];
+// Determine what we're creating: 'admin' or 'staff'
+$type = isset($_GET['type']) ? $_GET['type'] : 'admin';
+if (!in_array($type, ['admin', 'staff'])) $type = 'admin';
+
+$first_name = $last_name = $username = $role_id = $department = $specialization = $contact = '';
+$errors  = [];
 $success = '';
 $base_path = '../';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $first_name = mysqli_real_escape_string($conn, $_POST['first_name']);
-    $last_name = mysqli_real_escape_string($conn, $_POST['last_name']);
-    $username = mysqli_real_escape_string($conn, $_POST['username']);
-    $password = $_POST['password'];
-    $admin_id = mysqli_real_escape_string($conn, $_POST['admin_id']);
-    $department = mysqli_real_escape_string($conn, $_POST['department']);
-    
+    $type       = mysqli_real_escape_string($conn, $_POST['type'] ?? 'admin');
+    $first_name = mysqli_real_escape_string($conn, trim($_POST['first_name']));
+    $last_name  = mysqli_real_escape_string($conn, trim($_POST['last_name']));
+    $username   = mysqli_real_escape_string($conn, trim($_POST['username']));
+    $password   = $_POST['password'];
+    $role_id    = mysqli_real_escape_string($conn, trim($_POST['role_id']));
+
+    // Type-specific fields
+    $department     = mysqli_real_escape_string($conn, trim($_POST['department'] ?? ''));
+    $specialization = mysqli_real_escape_string($conn, trim($_POST['specialization'] ?? ''));
+    $contact        = mysqli_real_escape_string($conn, trim($_POST['contact'] ?? ''));
+
     // Auto-generate email
     $email = generateCITEmail($first_name, $last_name);
-    
+
     // Validations
-    if (empty($first_name)) $errors[] = "First name required";
-    if (empty($last_name)) $errors[] = "Last name required";
-    if (empty($username)) $errors[] = "Username required";
-    if (empty($password)) $errors[] = "Password required";
-    if (strlen($password) < 6) $errors[] = "Password must be 6+ characters";
-    if (empty($admin_id)) $errors[] = "Admin ID required";
-    
-    // Duplicate checking
-    $check_username = mysqli_query($conn, "SELECT UserID FROM user WHERE Username = '$username'");
-    if (mysqli_num_rows($check_username) > 0) $errors[] = "Username '$username' already exists!";
-    
-    $check_email = mysqli_query($conn, "SELECT UserID FROM user WHERE Email = '$email'");
-    if (mysqli_num_rows($check_email) > 0) $errors[] = "Email '$email' already exists!";
-    
-    $check_admin_id = mysqli_query($conn, "SELECT AdminID FROM system_administrator WHERE AdminID = '$admin_id'");
-    if (mysqli_num_rows($check_admin_id) > 0) $errors[] = "Admin ID '$admin_id' already exists!";
-    
+    if (empty($first_name))   $errors[] = "First name is required.";
+    if (empty($last_name))    $errors[] = "Last name is required.";
+    if (empty($username))     $errors[] = "Username is required.";
+    if (empty($password))     $errors[] = "Password is required.";
+    if (strlen($password) < 6) $errors[] = "Password must be at least 6 characters.";
+    if (empty($role_id))      $errors[] = ($type == 'staff' ? "Staff ID" : "Admin ID") . " is required.";
+
+    // Duplicate checks
+    if (mysqli_num_rows(mysqli_query($conn, "SELECT UserID FROM user WHERE Username = '$username'")) > 0)
+        $errors[] = "Username '$username' is already taken.";
+    if (mysqli_num_rows(mysqli_query($conn, "SELECT UserID FROM user WHERE Email = '$email'")) > 0)
+        $errors[] = "Email '$email' is already in use.";
+
+    if ($type == 'admin') {
+        if (mysqli_num_rows(mysqli_query($conn, "SELECT AdminID FROM system_administrator WHERE AdminID = '$role_id'")) > 0)
+            $errors[] = "Admin ID '$role_id' already exists.";
+    } else {
+        if (mysqli_num_rows(mysqli_query($conn, "SELECT StaffID FROM maintainance_staff WHERE StaffID = '$role_id'")) > 0)
+            $errors[] = "Staff ID '$role_id' already exists.";
+    }
+
     if (empty($errors)) {
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        mysqli_begin_transaction($conn);
-        try {
-            $insert_user = "INSERT INTO user (Username, Password, Email, FirstName, LastName, UserType) 
-                            VALUES ('$username', '$hashed_password', '$email', '$first_name', '$last_name', 'admin')";
-            if (mysqli_query($conn, $insert_user)) {
-                $user_id = mysqli_insert_id($conn);
-                $insert_admin = "INSERT INTO system_administrator (UserID, AdminID, Department) 
-                                 VALUES ('$user_id', '$admin_id', '$department')";
-                if (mysqli_query($conn, $insert_admin)) {
-                    mysqli_commit($conn);
-                    $success = "✅ Admin created successfully!";
-                    $first_name = $last_name = $username = $admin_id = $department = '';
-                } else { throw new Exception("Admin insert failed"); }
-            } else { throw new Exception("User insert failed"); }
-        } catch (Exception $e) {
-            mysqli_rollback($conn);
-            $errors[] = "Database error: " . $e->getMessage();
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
+        $user_type_val = ($type == 'staff') ? 'staff' : 'admin';
+
+        // Insert into user table
+        $q1 = "INSERT INTO user (Username, Password, Email, FirstName, LastName, UserType, IsActive)
+               VALUES ('$username', '$hashed', '$email', '$first_name', '$last_name', '$user_type_val', 1)";
+
+        if (mysqli_query($conn, $q1)) {
+            $new_id = mysqli_insert_id($conn);
+
+            // Insert into role table
+            if ($type == 'staff') {
+                $q2 = "INSERT INTO maintainance_staff (UserID, StaffID, Specialization, ContactNumber)
+                       VALUES ('$new_id', '$role_id', '$specialization', '$contact')";
+            } else {
+                $q2 = "INSERT INTO system_administrator (UserID, AdminID, Department)
+                       VALUES ('$new_id', '$role_id', '$department')";
+            }
+
+            if (mysqli_query($conn, $q2)) {
+                header("Location: index.php?tab=$type&created=1");
+                exit();
+            } else {
+                // Rollback: remove the user we just created
+                mysqli_query($conn, "DELETE FROM user WHERE UserID = '$new_id'");
+                $errors[] = "Role record failed: " . mysqli_error($conn);
+            }
+        } else {
+            $errors[] = "User creation failed: " . mysqli_error($conn);
         }
     }
 }
+
+$is_staff_form = ($type == 'staff');
+$title  = $is_staff_form ? 'Register New Maintenance Staff' : 'Register New Administrator';
+$id_label     = $is_staff_form ? 'Staff ID' : 'Admin ID';
+$id_placeholder = $is_staff_form ? 'STF002' : 'ADM002';
 ?>
 
 <!DOCTYPE html>
@@ -75,123 +101,117 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Admin - CIT University</title>
+    <title><?= $title ?> - CIT University</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { 
-            height: 100%; 
-            font-family: 'Segoe UI', sans-serif; 
-            background-color: #f4f4f4; 
-            display: flex; align-items: center; justify-content: center;
-            padding: 20px 0;
-        }
+        body, html { min-height: 100%; font-family: 'Segoe UI', sans-serif; background-color: #f4f4f4; display: flex; align-items: center; justify-content: center; padding: 30px 20px; }
 
-        /* 1/2 Screen Width for Desktop */
-        .admin-card {
-            width: 50%; 
-            min-width: 500px;
-            background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            border-top: 6px solid #800000;
-        }
-
+        .card { width: 55%; min-width: 500px; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 6px solid #800000; }
         .header-box { text-align: center; margin-bottom: 30px; }
         .logo { height: 70px; margin-bottom: 15px; }
-        .header-box h2 { color: #800000; font-size: 22px; text-transform: uppercase; }
-        
-        /* Grid for Name Row */
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #444; font-size: 14px; }
-        .form-group input {
-            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;
-        }
-        .form-group input:focus { border-color: #800000; box-shadow: 0 0 5px rgba(128,0,0,0.1); }
-        .form-group input[readonly] { background: #f9f9f9; color: #777; cursor: not-allowed; border-style: dashed; }
+        .header-box h2 { color: #800000; font-size: 20px; text-transform: uppercase; }
+        .header-box p { color: #888; font-size: 13px; margin-top: 5px; }
 
-        .btn-submit {
-            width: 100%; padding: 14px; background: #800000; color: white; border: none; 
-            border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s;
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 7px; color: #444; font-size: 14px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 11px 13px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none;
         }
-        .btn-submit:hover { background: #600000; transform: translateY(-2px); }
-        
-        .btn-cancel { display: block; text-align: center; margin-top: 15px; text-decoration: none; color: #888; font-size: 14px; }
+        .form-group input:focus { border-color: #800000; box-shadow: 0 0 0 3px rgba(128,0,0,0.08); }
+        .form-group .hint { font-size: 12px; color: #888; font-style: italic; margin-top: 4px; }
+
+        .btn-submit { width: 100%; padding: 13px; background: #800000; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 15px; cursor: pointer; }
+        .btn-submit:hover { background: #600000; }
+        .btn-cancel { display: block; text-align: center; margin-top: 12px; color: #888; text-decoration: none; font-size: 14px; }
         .btn-cancel:hover { color: #800000; }
 
-        .alert { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; text-align: center; }
-        .alert-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .alert-danger { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; text-align: left; }
+        .alert { padding: 13px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        .alert-danger { background: #fdecea; border-left: 5px solid #e53935; color: #c62828; }
+        .alert-danger ul { margin-top: 6px; padding-left: 18px; }
+        .alert-danger li { margin-bottom: 3px; }
 
-        .info-label { font-size: 12px; color: #666; font-style: italic; display: block; margin-top: 5px; }
+        .divider { border: 0; height: 1px; background: #eee; margin: 20px 0; }
+        .section-label { font-size: 12px; font-weight: bold; color: #800000; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
 
-        /* Responsive */
-        @media (max-width: 1024px) { .admin-card { width: 70%; } }
-        @media (max-width: 768px) { 
-            .admin-card { width: 95%; min-width: unset; padding: 25px; }
-            .form-row { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) { .card { width: 95%; min-width: unset; } .form-row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-
-    <div class="admin-card">
-        <div class="header-box">
-            <img src="<?= $base_path ?>citu_logo.png" alt="CIT Logo" class="logo">
-            <h2>Register New Administrator</h2>
-        </div>
-
-        <?php if ($success): ?>
-            <div class="alert alert-success"><?= $success; ?></div>
-        <?php endif; ?>
-        
-        <?php if (!empty($errors)): ?>
-            <div class="alert alert-danger">
-                <strong>Correct the following:</strong><br>
-                <?php foreach($errors as $error): ?> • <?= $error; ?><br> <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
-        <form method="POST">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>First Name *</label>
-                    <input type="text" name="first_name" value="<?= htmlspecialchars($first_name); ?>" required>
-                </div>
-                <div class="form-group">
-                    <label>Last Name *</label>
-                    <input type="text" name="last_name" value="<?= htmlspecialchars($last_name); ?>" required>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>System Username *</label>
-                <input type="text" name="username" value="<?= htmlspecialchars($username); ?>" placeholder="e.g. j.doe" required>
-            </div>
-
-            <div class="form-group">
-                <label>Temporary Password *</label>
-                <input type="password" name="password" required>
-                <span class="info-label">Minimum 6 characters required.</span>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Admin ID *</label>
-                    <input type="text" name="admin_id" value="<?= htmlspecialchars($admin_id); ?>" placeholder="ADMXXX" required>
-                </div>
-                <div class="form-group">
-                    <label>Department</label>
-                    <input type="text" name="department" value="<?= htmlspecialchars($department); ?>" placeholder="e.g. Finance">
-                </div>
-            </div>
-
-            <button type="submit" class="btn-submit">Create Account</button>
-            <a href="index.php" class="btn-cancel">Return to Admin List</a>
-        </form>
+<div class="card">
+    <div class="header-box">
+        <img src="<?= $base_path ?>citu_logo.png" alt="CIT Logo" class="logo">
+        <h2><?= $title ?></h2>
+        <p><?= $is_staff_form ? 'This will create a staff login account and register them in the maintenance staff table.' : 'This will create an admin login account with full system access.' ?></p>
     </div>
 
+    <?php if (!empty($errors)): ?>
+        <div class="alert alert-danger">
+            <strong>Please fix the following:</strong>
+            <ul><?php foreach($errors as $e): ?><li><?= htmlspecialchars($e) ?></li><?php endforeach; ?></ul>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST">
+        <input type="hidden" name="type" value="<?= htmlspecialchars($type) ?>">
+
+        <div class="section-label">Personal Information</div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>First Name *</label>
+                <input type="text" name="first_name" value="<?= htmlspecialchars($first_name) ?>" required>
+            </div>
+            <div class="form-group">
+                <label>Last Name *</label>
+                <input type="text" name="last_name" value="<?= htmlspecialchars($last_name) ?>" required>
+            </div>
+        </div>
+
+        <hr class="divider">
+        <div class="section-label">Login Credentials</div>
+
+        <div class="form-group">
+            <label>Username *</label>
+            <input type="text" name="username" value="<?= htmlspecialchars($username) ?>" placeholder="e.g. juan.dela" required>
+        </div>
+        <div class="form-group">
+            <label>Password *</label>
+            <input type="password" name="password" placeholder="Minimum 6 characters" required>
+            <div class="hint">The user can change this after logging in.</div>
+        </div>
+
+        <hr class="divider">
+        <div class="section-label"><?= $is_staff_form ? 'Staff Details' : 'Admin Details' ?></div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label><?= $id_label ?> *</label>
+                <input type="text" name="role_id" value="<?= htmlspecialchars($role_id) ?>" placeholder="<?= $id_placeholder ?>" required>
+            </div>
+
+            <?php if ($is_staff_form): ?>
+                <div class="form-group">
+                    <label>Specialization</label>
+                    <input type="text" name="specialization" value="<?= htmlspecialchars($specialization) ?>" placeholder="e.g. Electrical, Plumbing">
+                </div>
+            <?php else: ?>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" name="department" value="<?= htmlspecialchars($department) ?>" placeholder="e.g. IT Department">
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <?php if ($is_staff_form): ?>
+            <div class="form-group">
+                <label>Contact Number</label>
+                <input type="text" name="contact" value="<?= htmlspecialchars($contact) ?>" placeholder="e.g. 09123456789">
+            </div>
+        <?php endif; ?>
+
+        <button type="submit" class="btn-submit">✅ Create Account</button>
+        <a href="index.php?tab=<?= $type ?>" class="btn-cancel">← Return to list</a>
+    </form>
+</div>
 </body>
 </html>

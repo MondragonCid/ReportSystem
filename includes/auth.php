@@ -17,9 +17,21 @@ function isEmployee() {
     return isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'employee';
 }
 
+function isStudent() {
+    return isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'student';
+}
+
+// Student and Employee have the same access level
+function isRegularUser() {
+    return isset($_SESSION['user_type']) && in_array($_SESSION['user_type'], ['employee', 'student']);
+}
+
 function requireLogin() {
     if (!isLoggedIn()) {
-        header("Location: login.php");
+        // Works from both root and subdirectory pages
+        $depth = substr_count($_SERVER['PHP_SELF'], '/') - 1;
+        $prefix = str_repeat('../', max(0, $depth - 1));
+        header("Location: " . $prefix . "login.php");
         exit();
     }
 }

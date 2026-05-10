@@ -3,9 +3,13 @@ require_once 'config/database.php';
 require_once 'includes/auth.php';
 requireLogin();
 
-// If admin, redirect to admin dashboard
+// Redirect based on role
 if ($_SESSION['user_type'] == 'admin') {
     header("Location: admin/dashboard.php");
+    exit();
+}
+if ($_SESSION['user_type'] == 'staff') {
+    header("Location: staff/dashboard.php");
     exit();
 }
 

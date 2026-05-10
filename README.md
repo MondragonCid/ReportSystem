@@ -188,3 +188,14 @@ test_login.php
 test_password.php
 staff_dashboard.php
 admin/reports.php
+
+WHEN ADDING NEW STAFF
+
+QUERY:
+SELECT UserID, FirstName, LastName FROM user WHERE UserType = 'staff';
+
+INSERT INTO maintainance_staff (UserID, StaffID, Specialization, ContactNumber)
+VALUES (11, 'STF002', 'Plumbing', '09987654321');
+
+11 = USERID "CHANGE TO DEDICATED USERID"
+
