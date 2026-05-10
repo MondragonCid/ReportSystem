@@ -1,17 +1,22 @@
 <?php
 require_once 'config/database.php';
-require_once 'includes/auth.php';  // Add this for login check
-include 'includes/header.php';      // Add this
-include 'includes/navbar.php';      // Keep this
+include 'includes/navbar.php'; 
 
-// Check if user is logged in
+// Ensure session is active
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Check login
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
+$user_type = $_SESSION['user_type'];
 
+// Fetch reports for the logged-in user (Staff/User)
 $query = "SELECT dr.*, l.BuildingName, l.ClassRoomNum 
           FROM damage_report dr
           JOIN location l ON dr.LocationID = l.LocationID
@@ -21,70 +26,143 @@ $query = "SELECT dr.*, l.BuildingName, l.ClassRoomNum
 $result = mysqli_query($conn, $query);
 ?>
 
-<!-- REMOVE the duplicate HTML head section since header.php already has it -->
-<!-- Your content starts here -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Reports - CIT University</title>
+    <style>
+        /* CORE LAYOUT */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f4f4; overflow: hidden; }
+        
+        .main-wrapper { display: flex; height: 100vh; width: 100vw; }
 
-<h1>📋 My Damage Reports</h1>
-<p>View all reports you have submitted</p>
+        /* SIDEBAR - Full Vertical Coverage */
+        .sidebar { 
+            width: 260px; 
+            background-color: #800000; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%; 
+            flex-shrink: 0; 
+        }
+        
+        .sidebar-brand { padding: 25px; font-weight: bold; text-align: center; background-color: #600000; font-size: 1.1rem; }
+        .nav-item { padding: 15px 20px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background-color: #a00000; }
+        .logout-btn { margin-top: auto; background-color: rgba(0,0,0,0.2); }
 
-<hr>
+        /* CONTENT AREA */
+        .content-area { flex: 1; padding: 40px; overflow-y: auto; }
+        .header-container { display: flex; align-items: center; margin-bottom: 5px; }
+        .logo { height: 60px; margin-right: 15px; }
+        .header-text h1 { color: #800000; font-size: 24px; text-transform: uppercase; }
+        .red-line { border: 0; height: 3px; background-color: #800000; margin: 15px 0 25px 0; }
 
-<div style="margin: 20px 0;">
-    <a href="report_damage.php" class="btn">➕ Report New Damage</a>
-    <a href="dashboard.php" class="btn btn-secondary">← Back to Dashboard</a>
-</div>
+        /* TABLE STYLES */
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .report-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .report-table th { background: #f8f9fa; padding: 15px; text-align: left; border-bottom: 2px solid #dee2e6; color: #444; font-size: 14px; }
+        .report-table td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; vertical-align: middle; }
+        
+        /* STATUS BADGES */
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; text-transform: uppercase; display: inline-block; }
+        .status-pending { background: #f39c12; }
+        .status-in-progress { background: #3498db; }
+        .status-resolved { background: #27ae60; }
 
-<table border="1" style="width:100%; border-collapse: collapse;">
-    <thead>
-        <tr>
-            <th>Report #</th>
-            <th>Location</th>
-            <th>Category</th>
-            <th>Description</th>
-            <th>Date Reported</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if (mysqli_num_rows($result) > 0): ?>
-            <?php while($report = mysqli_fetch_assoc($result)): ?>
-                <tr>
-                    <td><strong>#<?php echo $report['ReportID']; ?></strong></td>
-                    <td><?php echo $report['BuildingName'] . ' ' . $report['ClassRoomNum']; ?></td>
-                    <td><?php echo $report['Category']; ?></td>
-                    <td><?php echo substr($report['Description'], 0, 60); ?>...</td>
-                    <td><?php echo date('Y-m-d h:i A', strtotime($report['DateReported'])); ?></td>
-                    <td>
-                        <?php
-                        $status = $report['Status'];
-                        $badge_class = '';
-                        if ($status == 'pending') $badge_class = 'status-pending';
-                        elseif ($status == 'in-progress') $badge_class = 'status-in-progress';
-                        elseif ($status == 'resolved') $badge_class = 'status-resolved';
-                        else $badge_class = 'status-pending';
-                        ?>
-                        <span class="<?php echo $badge_class; ?>">
-                            <?php echo ucfirst($status); ?>
-                        </span>
-                    </td>
-                </tr>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="6" style="text-align: center;">
-                    ❌ No reports yet. 
-                    <a href="report_damage.php">Click here to submit a report</a>
-                </td>
-            </tr>
-        <?php endif; ?>
-    </tbody>
-</table>
+        .btn-new { background-color: #800000; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; font-size: 14px; }
+        .btn-new:hover { background-color: #a00000; }
 
-<?php if (mysqli_num_rows($result) > 0): ?>
-    <div class="info-box" style="margin-top: 20px;">
-        <strong>📊 Summary:</strong> You have submitted <?php echo mysqli_num_rows($result); ?> report(s).
-        <br>For questions about your reports, contact the Maintenance Department.
+        .summary-box { margin-top: 25px; padding: 15px; background: #e9ecef; border-left: 5px solid #800000; border-radius: 4px; font-size: 14px; color: #444; }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <nav class="sidebar">
+            <div class="sidebar-brand"><?php echo strtoupper($user_type); ?> PANEL</div>
+            <a href="dashboard.php" class="nav-item">Dashboard</a>
+            <a href="report_damage.php" class="nav-item">Report Issue</a>
+            <a href="my_reports.php" class="nav-item active">View My Reports</a>
+            <a href="logout.php" class="nav-item logout-btn">Logout</a>
+        </nav>
+
+        <main class="content-area">
+            <div class="header-container">
+                <img src="citu_logo.png" alt="Logo" class="logo">
+                <div class="header-text">
+                    <h1>CEBU INSTITUTE OF TECHNOLOGY - UNIVERSITY</h1>
+                    <p>Damage Reporting System | My Submissions</p>
+                </div>
+            </div>
+            <hr class="red-line">
+
+            <div style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="color: #333;">📋 Personal Report History</h2>
+                <a href="report_damage.php" class="btn-new">➕ Report New Damage</a>
+            </div>
+
+            <div class="table-container">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Report #</th>
+                            <th>Location</th>
+                            <th>Category</th>
+                            <th>Date Reported</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (mysqli_num_rows($result) > 0): ?>
+                            <?php while($report = mysqli_fetch_assoc($result)): ?>
+                                <tr>
+                                    <td><strong>#<?php echo $report['ReportID']; ?></strong></td>
+                                    <td><?php echo htmlspecialchars($report['BuildingName'] . ' - ' . $report['ClassRoomNum']); ?></td>
+                                    <td><?php echo htmlspecialchars($report['Category']); ?></td>
+                                    <td><?php echo date('M d, Y h:i A', strtotime($report['DateReported'])); ?></td>
+                                    <td>
+                                        <?php
+                                        $status = $report['Status'];
+                                        $class = "status-pending";
+                                        if ($status == 'in-progress') $class = "status-in-progress";
+                                        if ($status == 'resolved') $class = "status-resolved";
+                                        ?>
+                                        <span class="badge <?php echo $class; ?>">
+                                            <?php echo ucfirst($status); ?>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px; color: #777;">
+                                    📭 You haven't submitted any reports yet.<br>
+                                    <a href="report_damage.php" style="color: #800000;">Submit your first report here.</a>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <?php if (mysqli_num_rows($result) > 0): ?>
+                <div class="summary-box">
+                    <strong>📊 Summary:</strong> You have submitted a total of <strong><?php echo mysqli_num_rows($result); ?></strong> report(s).
+                    <br>Status updates are managed by the Maintenance Department. Check back here for progress.
+                </div>
+            <?php endif; ?>
+        </main>
     </div>
-<?php endif; ?>
 
-<?php include 'includes/footer.php'; ?>
+</body>
+</html>
