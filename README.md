@@ -1,108 +1,188 @@
 # CIT University Damage Reporting System
 
-## Project Overview
 A web-based damage reporting system for Cebu Institute of Technology - University.
 
-## Features
-- ✅ Admin CRUD Operations (Create, Read, Update, Delete)
-- ✅ User Authentication (Login/Logout)
-- ✅ Submit Damage Reports
-- ✅ View My Reports
-- ✅ Auto-generate CIT email format (firstname.lastname@cit.edu)
-
 ## Tech Stack
-- PHP (Procedural)
+- PHP (Procedural) - Backend
+- MySQL - Database
+- HTML/CSS/JS - Frontend
+- XAMPP - Local Development
+
+---
+
+## Getting Started
+
+### Prerequisites
+- XAMPP installed
+- PHP 7.4 or higher
 - MySQL
-- HTML/CSS
-- XAMPP
 
-## Installation
+### Installation
 
-### 1. Start XAMPP
-- Start Apache and MySQL services
+1. Start XAMPP (Apache + MySQL)
+2. Clone/copy project to: `C:\xampp\htdocs\ReportSystem`
+3. Import database from `sql/ReportSystem.sql` using phpMyAdmin
+4. Access: `http://localhost/ReportSystem`
 
-### 2. Create Database
-- Open phpMyAdmin: http://localhost/phpmyadmin
-- Import `sql/cit_reporting_system.sql`
+### Test Credentials
 
-### 3. Configure Project
-- Copy folder to: `C:\xampp\htdocs\cit_reporting_system`
+| Role | Username | Password |
+|------|----------|----------|
+| Admin | admin.cit | admin123 |
+| Employee | john.smith | admin123 |
+| Staff | mike.staff | admin123 |
 
-### 4. Run Project
-- Open browser: `http://localhost/cit_reporting_system`
-
-## Test Accounts
-
-| User Type | Username | Password | Email |
-|-----------|----------|----------|-------|
-| Admin | admin.cit | admin123 | admin@cit.edu |
-| Employee | john.smith | admin123 | john.smith@cit.edu |
-| Staff | mike.staff | admin123 | mike.johnson@cit.edu |
+---
 
 ## Project Structure
 
 cit_reporting_system/
+│
 ├── config/ # Database configuration
-├── includes/ # Header, footer, navbar, validation
-├── admin/ # Admin CRUD operations
-├── assets/ # CSS, JS files
-├── sql/ # Database SQL file
-├── login.php # Login page
+├── includes/ # Reusable components (header, footer, navbar)
+├── admin/ # Admin CRUD (backend)
+├── locations/ # Location CRUD (backend)
+├── assets/ # FRONTEND FILES
+│ ├── css/style.css # All styles
+│ └── js/main.js # All JavaScript
+├── sql/ # Database dump
+├── login.php # Authentication page
 ├── dashboard.php # User dashboard
-├── report_damage.php # Submit report page
-├── my_reports.php # View user's reports
-└── index.php # Home page
+├── report_damage.php # Report submission form
+├── my_reports.php # User reports list
+├── index.php # Landing page
+└── logout.php # Logout handler
 
 
-## CRUD Operations (Admin)
+---
 
-| Operation | URL | Description |
-|-----------|-----|-------------|
-| CREATE | `/admin/create.php` | Add new admin |
-| READ | `/admin/index.php` | List all admins |
-| UPDATE | `/admin/edit.php?id=X` | Edit admin |
-| DELETE | `/admin/delete.php?id=X` | Delete admin |
+## Development Responsibilities
 
-## Email Format
-- All emails follow: `firstname.lastname@cit.edu`
-- Auto-generated from first and last name
+### Backend Developer
+- Database schema and queries
+- Admin CRUD operations
+- Location CRUD operations
+- Authentication logic
+- Form processing
+- Email validation (`firstname.lastname@cit.edu`)
 
-## Developer
-CIT University - BSIT Program
+### Frontend Developer
+- All visual design and styling
+- Responsive layouts
+- Form enhancements (character counters, validation)
+- Navigation design
+- Dashboard UI components
+- Mobile responsiveness
 
-## License
-For educational purposes only.
+---
 
-cit_reporting_system/
-│
-├── config/
-│   └── database.php
-│
-├── includes/
-│   ├── header.php
-│   ├── footer.php
-│   ├── navbar.php
-│   └── validation.php
-│
-├── admin/
-│   ├── index.php          (READ - List all admins)
-│   ├── create.php         (CREATE - Add new admin)
-│   ├── edit.php           (UPDATE - Edit admin)
-│   └── delete.php         (DELETE - Delete admin)
-│
-├── assets/
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       └── main.js
-│
-├── sql/
-│   └── cit_reporting_system.sql
-│
-├── login.php
-├── logout.php
-├── dashboard.php
-├── report_damage.php
-├── my_reports.php
-├── index.php
-└── README.md
+## Frontend Files to Modify
+
+| File | Responsibility |
+|------|----------------|
+| `assets/css/style.css` | All CSS styles |
+| `assets/js/main.js` | All JavaScript functionality |
+| `login.php` | Login page layout |
+| `dashboard.php` | User dashboard layout |
+| `report_damage.php` | Report form layout |
+| `my_reports.php` | Reports table layout |
+| `index.php` | Homepage layout |
+| `includes/header.php` | Document head, meta tags |
+| `includes/navbar.php` | Navigation menu styling |
+| `includes/footer.php` | Footer layout |
+
+---
+
+## Backend Files (Do Not Modify)
+
+- `config/database.php`
+- `admin/*.php`
+- `locations/*.php`
+- `includes/validation.php`
+- `logout.php`
+
+---
+
+## API / Page Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/login.php` | GET/POST | Authentication |
+| `/dashboard.php` | GET | User dashboard |
+| `/report_damage.php` | GET/POST | Submit report |
+| `/my_reports.php` | GET | View user reports |
+| `/admin/index.php` | GET | List admins |
+| `/admin/create.php` | GET/POST | Create admin |
+| `/admin/edit.php` | GET/POST | Edit admin |
+| `/admin/delete.php` | GET/POST | Delete admin |
+| `/locations/index.php` | GET | List locations |
+| `/locations/create.php` | GET/POST | Create location |
+| `/locations/edit.php` | GET/POST | Edit location |
+| `/locations/delete.php` | GET/POST | Delete location |
+
+---
+
+## Session Variables Available
+
+```php
+$_SESSION['user_id']     // User ID
+$_SESSION['username']    // Username
+$_SESSION['user_type']   // 'admin', 'employee', or 'staff'
+$_SESSION['fullname']    // First + Last name
+$_SESSION['email']       // User email
+
+Database Schema (Quick Reference)
+user table
+UserID (PK), Username, Password, Email, FirstName, LastName, UserType
+
+system_administrator table
+UserID (FK to user), AdminID, Department
+
+location table
+LocationID (PK), BuildingName, ClassRoomNum
+
+damage_report table
+ReportID (PK), ReporterID (FK to user), LocationID (FK to location), Category, Description, Status, DateReported
+
+Common Frontend Tasks
+Add Character Counter to Textarea
+// In main.js
+const textarea = document.querySelector('textarea[name="description"]');
+const counter = document.createElement('div');
+textarea.addEventListener('input', () => {
+    counter.textContent = `${textarea.value.length}/500`;
+});
+
+Style Status Badges
+.status-pending { background: #f39c12; }
+.status-progress { background: #3498db; }
+.status-resolved { background: #27ae60; }
+
+Confirm Before Delete
+// Add to delete buttons
+onclick="return confirm('Delete this item?')"
+
+Testing
+Start XAMPP (Apache + MySQL)
+
+Access: http://localhost/ReportSystem
+
+Login with test credentials
+
+Test all pages and forms
+
+Version
+1.0.0
+
+License
+CIT University - Educational Project
+
+TEST FILES :
+
+create_password.php
+fix_password.php
+register_admin.php
+test_login.php
+test_password.php
+staff_dashboard.php
+admin/reports.php

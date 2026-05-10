@@ -2,6 +2,7 @@
 require_once 'config/database.php';
 include 'includes/navbar.php';
 
+// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
@@ -9,6 +10,10 @@ if (!isset($_SESSION['user_id'])) {
 
 $success = '';
 $error = '';
+
+// Get user type for display
+$is_admin = ($_SESSION['user_type'] == 'admin');
+$is_staff = ($_SESSION['user_type'] == 'staff');
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $location_id = mysqli_real_escape_string($conn, $_POST['location_id']);
@@ -24,9 +29,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if (mysqli_query($conn, $query)) {
             $report_id = mysqli_insert_id($conn);
-            $success = " Report submitted successfully! Reference #: " . $report_id;
+            $success = "✅ Report submitted successfully! Reference #: " . $report_id;
         } else {
-            $error = " Failed to submit report: " . mysqli_error($conn);
+            $error = "❌ Failed to submit report: " . mysqli_error($conn);
         }
     }
 }
@@ -45,13 +50,13 @@ $locations_result = mysqli_query($conn, $locations_query);
 </head>
 <body>
     <div class="container">
-        <h1> Report Damage / Issue</h1>
+        <h1>📝 Report Damage / Issue</h1>
         
         <div class="info-box">
-            <strong> Reporter Information</strong><br>
+            <strong>👤 Reporter Information</strong><br>
             Name: <?php echo htmlspecialchars($_SESSION['fullname']); ?><br>
             Email: <?php echo htmlspecialchars($_SESSION['email']); ?><br>
-            User Type: <?php echo ucfirst($_SESSION['user_type']); ?>
+            Role: <?php echo ucfirst($_SESSION['user_type']); ?>
         </div>
         
         <?php if ($success): ?>
@@ -64,7 +69,7 @@ $locations_result = mysqli_query($conn, $locations_query);
         
         <form method="POST" action="">
             <div class="form-group">
-                <label> Location *</label>
+                <label>📍 Location *</label>
                 <select name="location_id" required>
                     <option value="">Select Building & Room</option>
                     <?php while($loc = mysqli_fetch_assoc($locations_result)): ?>
@@ -76,15 +81,15 @@ $locations_result = mysqli_query($conn, $locations_query);
             </div>
             
             <div class="form-group">
-                <label> Category *</label>
+                <label>📂 Category *</label>
                 <select name="category" required>
                     <option value="">Select Category</option>
-                    <option>Electrical (lights, outlets, fans, ACU)</option>
-                    <option>Furniture (chairs, tables, cabinets)</option>
-                    <option>IT Equipment (computers, projectors, printers)</option>
-                    <option>Plumbing (faucets, toilets, pipes)</option>
-                    <option>Structural (walls, ceilings, floors)</option>
-                    <option>Other Facilities</option>
+                    <option> Electrical (lights, outlets, fans, ACU)</option>
+                    <option> Furniture (chairs, tables, cabinets)</option>
+                    <option> IT Equipment (computers, projectors, printers)</option>
+                    <option> Plumbing (faucets, toilets, pipes)</option>
+                    <option> Structural (walls, ceilings, floors)</option>
+                    <option> Other Facilities</option>
                 </select>
             </div>
             
@@ -95,8 +100,8 @@ $locations_result = mysqli_query($conn, $locations_query);
                 <small>Max 500 characters</small>
             </div>
             
-            <button type="submit" class="btn"> Submit Report</button>
-            <a href="dashboard.php" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn">✅ Submit Report</button>
+            <a href="my_reports.php" class="btn btn-secondary">📋 View My Reports</a>
         </form>
     </div>
 </body>
