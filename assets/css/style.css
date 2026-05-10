@@ -128,6 +128,7 @@ th {
     background: #ffc107;
     padding: 2px 5px;
     border-radius: 3px;
+    display: inline-block;
 }
 
 .status-in-progress {
@@ -135,6 +136,7 @@ th {
     padding: 2px 5px;
     border-radius: 3px;
     color: white;
+    display: inline-block;
 }
 
 .status-resolved {
@@ -142,6 +144,7 @@ th {
     padding: 2px 5px;
     border-radius: 3px;
     color: white;
+    display: inline-block;
 }
 
 /* Footer */
@@ -170,4 +173,216 @@ footer {
     margin: 10px 0;
     border: 1px solid #ffcc00;
     border-radius: 4px;
+}
+
+/* ============================================ */
+/* LOGIN PAGE STYLES - FIXED AND COMPLETE */
+/* ============================================ */
+
+/* Login Container */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0;
+    padding: 20px;
+}
+
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 450px;
+}
+
+.cit-logo {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.cit-logo h1 {
+    font-size: 20px;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.cit-logo h2 {
+    font-size: 24px;
+    color: #3498db;
+    margin-bottom: 10px;
+}
+
+.cit-logo h3 {
+    font-size: 16px;
+    color: #7f8c8d;
+    font-weight: normal;
+}
+
+/* Login Info Box */
+.login-info {
+    background: #e8f4fd;
+    padding: 15px;
+    border-radius: 5px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-info p {
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.login-info small {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+/* Form Group for Login */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+/* Login Button */
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-login:hover {
+    background: #2980b9;
+}
+
+/* Alert Boxes */
+.alert {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.alert-danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+/* Horizontal Rule */
+hr {
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+/* Test Accounts Section */
+.test-accounts {
+    font-size: 12px;
+    margin-top: 20px;
+}
+
+.test-accounts p {
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.test-accounts ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.test-accounts li {
+    padding: 5px 0;
+    color: #555;
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+    .login-box {
+        padding: 25px;
+    }
+    
+    .cit-logo h1 {
+        font-size: 16px;
+    }
+    
+    .cit-logo h2 {
+        font-size: 20px;
+    }
+
+    /* Status Badge Styles - Add to your style.css */
+.status-pending {
+    display: inline-block;
+    background-color: #f39c12;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-in-progress {
+    display: inline-block;
+    background-color: #3498db;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-resolved {
+    display: inline-block;
+    background-color: #27ae60;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-cancelled {
+    display: inline-block;
+    background-color: #e74c3c;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+}
 }

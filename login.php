@@ -20,10 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['user_type'] = $user['UserType'];
             $_SESSION['fullname'] = $user['FirstName'] . ' ' . $user['LastName'];
             
+            // Redirect based on user type
             if ($user['UserType'] == 'admin') {
                 header("Location: admin/index.php");
             } else {
-                header("Location: dashboard.php");
+                // Students and employees go to reporting page
+                header("Location: report_damage.php");
             }
             exit();
         } else {
@@ -166,7 +168,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </style>
 </head>
 <body>
-
     <div class="header-logo">
         <img src="citu_logo.png" alt="CIT Logo">
         <h1>CIT University<br>Fault Report Process</h1>
@@ -213,6 +214,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <li><strong>Employee:</strong> john.smith / admin123</li>
                 <li><strong>Staff:</strong> mike.staff / admin123</li>
             </ul>
+
+            <p><strong> User Access Levels:</strong></p>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li> <strong>Admin</strong> → Admin Dashboard (CRUD, Reports, Staff)</li>
+                    <li> <strong>Staff</strong> → Staff Dashboard (Assignments, Updates)</li>
+                    <li><strong>Student/Employee</strong> → Submit Reports, Track Status</li>
         </div>
     </div>
 
