@@ -60,26 +60,7 @@ if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false ||
 <body>
 
     <div class="main-wrapper">
-        <nav class="sidebar">
-            <div class="sidebar-brand">MENU</div>
-            
-            <a href="<?= $base_path ?>index.php" class="nav-item active">Home</a>
-            
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <a href="<?= $base_path ?>dashboard.php" class="nav-item">Dashboard</a>
-                <a href="<?= $base_path ?>report_damage.php" class="nav-item">Report Damage</a>
-                <a href="<?= $base_path ?>my_reports.php" class="nav-item">My Reports</a>
-                
-                <?php if ($_SESSION['user_type'] == 'admin'): ?>
-                    <a href="<?= $base_path ?>admin/index.php" class="nav-item">Manage Admins</a>
-                    <a href="<?= $base_path ?>locations/index.php" class="nav-item">Manage Locations</a>
-                <?php endif; ?>
-                
-                <a href="<?= $base_path ?>logout.php" class="nav-item logout-btn">Logout</a>
-            <?php else: ?>
-                <a href="<?= $base_path ?>login.php" class="nav-item">Login to System</a>
-            <?php endif; ?>
-        </nav>
+        <?php include 'includes/sidebar.php'; ?>
 
         <main class="content-area">
             <div class="header-container">
