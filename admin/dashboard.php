@@ -247,11 +247,6 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
                     </tbody>
                 </table>
             </div>
-            
-            <footer class="main-footer">
-                © 2026 Cebu Institute of Technology - University<br>
-                Admin Management System
-            </footer>
         </main>
     </div>
 
@@ -272,5 +267,3 @@ if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
     </script>
 </body>
 </html>
-
-<!-- <?php include '../includes/footer.php'; ?> -->

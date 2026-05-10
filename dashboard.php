@@ -1,6 +1,5 @@
 <?php
 require_once 'config/database.php';
-include 'includes/navbar.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -11,13 +10,22 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 $user_type = $_SESSION['user_type'];
 
-// If admin, redirect to admin dashboard
+// If admin, redirect to admin dashboard (Optional: Add logic if Staff has separate directory)
 if ($user_type == 'admin') {
     header("Location: admin/dashboard.php");
     exit();
 }
 
-// For students/employees - get their reports
+// Handle Status Update for Staff
+if (isset($_POST['update_status'])) {
+    $report_id = mysqli_real_escape_with_string($conn, $_POST['report_id']);
+    $new_status = mysqli_real_escape_with_string($conn, $_POST['status']);
+    
+    $update_query = "UPDATE damage_report SET Status = '$new_status' WHERE ReportID = '$report_id'";
+    mysqli_query($conn, $update_query);
+}
+
+// Stats Query
 $reports_query = "SELECT 
     COUNT(*) as total,
     SUM(CASE WHEN Status = 'pending' THEN 1 ELSE 0 END) as pending,
@@ -27,176 +35,162 @@ $reports_query = "SELECT
 $reports_result = mysqli_query($conn, $reports_query);
 $stats = mysqli_fetch_assoc($reports_result);
 
+// Recent Reports Query
 $recent_query = "SELECT dr.*, l.BuildingName, l.ClassRoomNum 
                  FROM damage_report dr
                  JOIN location l ON dr.LocationID = l.LocationID
                  WHERE dr.ReporterID = '$user_id'
-                 ORDER BY dr.DateReported DESC LIMIT 5";
+                 ORDER BY dr.DateReported DESC LIMIT 10";
 $recent_result = mysqli_query($conn, $recent_query);
+
+$base_path = './'; 
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - CIT Damage Reporting System</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - CIT Damage Reporting</title>
     <style>
-    
-        /* RESET & BASE */
+        /* RESET & FULL HEIGHT LAYOUT */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9f9f9; }
-
-        .main-wrapper { display: flex; min-height: calc(100vh - 70px); }
-
-        /* SIDEBAR (image_59adb1.png) */
-        .sidebar { width: 250px; background-color: #800000; color: white; display: flex; flex-direction: column; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        .sidebar-brand { padding: 25px; font-weight: bold; font-size: 14px; letter-spacing: 1px; text-align: center; background-color: #600000; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        html, body { height: 100%; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f4f4; }
         
-        .nav-item { padding: 15px 20px; color: white; text-decoration: none; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: flex; align-items: center; }
-        .nav-item:hover { background-color: #a00000; padding-left: 30px; }
-        .nav-item.logout-btn { margin-top: auto; background-color: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.1); }
+        .main-wrapper { display: flex; height: 100vh; overflow: hidden; }
+
+        /* SIDEBAR - FULL VERTICAL COVERAGE */
+        .sidebar { 
+            width: 260px; 
+            background-color: #800000; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100%; 
+            position: sticky;
+            top: 0;
+        }
+        .sidebar-brand { padding: 25px; font-weight: bold; text-align: center; background-color: #600000; letter-spacing: 1px; }
+        .nav-item { padding: 15px 20px; color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .nav-item:hover, .nav-item.active { background-color: #a00000; padding-left: 30px; }
+        .logout-btn { margin-top: auto; background-color: rgba(0,0,0,0.2); }
 
         /* CONTENT AREA */
-        .content-area { flex: 1; padding: 40px; overflow-y: auto; }
-        
+        .content-area { flex: 1; padding: 40px; overflow-y: auto; height: 100%; }
         .header-container { display: flex; align-items: center; margin-bottom: 5px; }
-        .logo { height: 60px; margin-right: 15px; } /* Logo placement like image_59b8ee.png */
-        .header-text h1 { color: #800000; font-size: 24px; text-transform: uppercase; margin: 0; }
-        .header-text p { font-size: 16px; color: #555; font-weight: 500; }
-        .red-line { border: 0; height: 3px; background-color: #800000; margin: 15px 0 25px 0; }
+        .logo { height: 60px; margin-right: 15px; }
+        .header-text h1 { color: #800000; font-size: 24px; text-transform: uppercase; }
+        .red-line { border: 0; height: 3px; background-color: #800000; margin: 15px 0 25px 0; width: 100%; }
 
-        /* ALERTS */
-        .alert-banner { background-color: #e8f5e9; border-left: 5px solid #4caf50; padding: 20px; margin-bottom: 30px; border-radius: 4px; color: #2e7d32; font-size: 14px; }
-        .alert-banner strong { font-size: 16px; }
+        /* STATS CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #ddd; }
+        .stat-number { font-size: 32px; font-weight: bold; color: #2c3e50; margin-top: 10px; }
 
-        /* ABOUT SECTION CARDS (image_594b78.png) */
-        .white-card { background: white; padding: 30px; border-radius: 8px; border: 1px solid #ddd; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .white-card h3 { margin-bottom: 15px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        /* TABLE STYLES */
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        .data-table th { background: #f8f9fa; padding: 15px; text-align: left; border-bottom: 2px solid #eee; color: #333; }
+        .data-table td { padding: 15px; border-bottom: 1px solid #eee; font-size: 14px; }
         
-        .action-list { display: grid; gap: 15px; margin-top: 20px; }
-        .action-item { display: flex; align-items: center; padding: 18px; background-color: #fcfcfc; border: 1px solid #eee; border-radius: 10px; text-decoration: none; color: #333; transition: all 0.3s ease; }
-        .action-item:hover { background-color: #fff5f5; border-color: #800000; transform: translateX(8px); box-shadow: 0 4px 12px rgba(128,0,0,0.1); }
-        .action-item .icon { font-size: 24px; margin-right: 20px; min-width: 40px; text-align: center; }
-        .action-item .label { font-weight: bold; color: #800000; font-size: 16px; display: block; }
-        .action-item .subtext { font-size: 13px; color: #777; }
+        /* STATUS BADGES */
+        .badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; text-transform: uppercase; }
+        .status-pending { background: #f39c12; }
+        .status-in-progress { background: #3498db; }
+        .status-resolved { background: #27ae60; }
 
-        /* FOOTER (image_59ad12.png) */
-        .main-footer { background-color: #333; color: white; text-align: center; padding: 20px; font-size: 13px; line-height: 1.5; }
+        .btn-update { background: #800000; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .btn-update:hover { background: #a00000; }
+        
+        .main-footer { text-align: center; padding: 20px; color: #777; font-size: 12px; margin-top: 30px; }
     </style>
-    
 </head>
 <body>
+
     <div class="main-wrapper">
         <nav class="sidebar">
-            <div class="sidebar-brand">MENU</div>
-            
-            <a href="<?= $base_path ?>index.php" class="nav-item">Home</a>
-            
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <a href="<?= $base_path ?>dashboard.php" class="nav-item">Dashboard</a>
-                <a href="<?= $base_path ?>report_damage.php" class="nav-item">Report Damage</a>
-                <a href="<?= $base_path ?>my_reports.php" class="nav-item">My Reports</a>
-                
-                <?php if ($_SESSION['user_type'] == 'admin'): ?>
-                    <a href="<?= $base_path ?>admin/index.php" class="nav-item">Manage Admins</a>
-                    <a href="<?= $base_path ?>locations/index.php" class="nav-item">Manage Locations</a>
-                <?php endif; ?>
-                
-                <a href="<?= $base_path ?>logout.php" class="nav-item logout-btn">Logout</a>
-            <?php else: ?>
-                <a href="<?= $base_path ?>login.php" class="nav-item">Login to System</a>
-            <?php endif; ?>
+            <div class="sidebar-brand">STAFF PANEL</div>
+            <a href="dashboard.php" class="nav-item active">Dashboard</a>
+            <a href="report_damage.php" class="nav-item">Report Issue</a>
+            <a href="my_reports.php" class="nav-item">View My Reports</a>
+            <a href="logout.php" class="nav-item logout-btn">Logout</a>
         </nav>
 
         <main class="content-area">
             <div class="header-container">
-                <img src="<?= $base_path ?>citu_logo.png" alt="CIT-U Logo" class="logo">
+                <img src="citu_logo.png" alt="Logo" class="logo">
                 <div class="header-text">
-                    <h1>CEBU INSTITUTE OF TECHNOLOGY - UNIVERSITY</h1>
-                    <p>Damage Reporting System</p>
+                    <h1>Staff Dashboard</h1>
+                    <p>Welcome, <?php echo htmlspecialchars($_SESSION['fullname']); ?>!</p>
                 </div>
             </div>
             <hr class="red-line">
 
-            <div class="main-container">
-                h1>Welcome, <?php echo htmlspecialchars($_SESSION['fullname']); ?>! 👋</h1>
-        <p>Manage your damage reports and track their status</p>
-        
-        <hr>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>📋 Total Reports</h3>
-                <div class="stat-number"><?php echo $stats['total'] ?? 0; ?></div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>📋 Total Reports</h3>
+                    <div class="stat-number"><?php echo $stats['total'] ?? 0; ?></div>
+                </div>
+                <div class="stat-card" style="border-top: 4px solid #f39c12;">
+                    <h3>⏳ Pending</h3>
+                    <div class="stat-number" style="color: #f39c12;"><?php echo $stats['pending'] ?? 0; ?></div>
+                </div>
+                <div class="stat-card" style="border-top: 4px solid #3498db;">
+                    <h3>🔄 In Progress</h3>
+                    <div class="stat-number" style="color: #3498db;"><?php echo $stats['in_progress'] ?? 0; ?></div>
+                </div>
+                <div class="stat-card" style="border-top: 4px solid #27ae60;">
+                    <h3>✅ Resolved</h3>
+                    <div class="stat-number" style="color: #27ae60;"><?php echo $stats['resolved'] ?? 0; ?></div>
+                </div>
             </div>
-            <div class="stat-card">
-                <h3>⏳ Pending</h3>
-                <div class="stat-number"><?php echo $stats['pending'] ?? 0; ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>🔄 In Progress</h3>
-                <div class="stat-number"><?php echo $stats['in_progress'] ?? 0; ?></div>
-            </div>
-            <div class="stat-card">
-                <h3>✅ Resolved</h3>
-                <div class="stat-number"><?php echo $stats['resolved'] ?? 0; ?></div>
-            </div>
-        </div>
-        
-        <div class="section">
-            <h2>📝 Quick Actions</h2>
-            <div style="display: flex; gap: 15px;">
-                <a href="report_damage.php" class="btn">➕ Report New Damage</a>
-                <a href="my_reports.php" class="btn btn-secondary">📋 View All My Reports</a>
-            </div>
-        </div>
-        
-        <div class="section">
-            <h2>📊 Recent Reports</h2>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Report ID</th>
-                        <th>Location</th>
-                        <th>Category</th>
-                        <th>Date Reported</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (mysqli_num_rows($recent_result) > 0): ?>
-                        <?php while($report = mysqli_fetch_assoc($recent_result)): ?>
-                            <tr>
-                                <td>#<?php echo $report['ReportID']; ?></td>
-                                <td><?php echo $report['BuildingName'] . ' - ' . $report['ClassRoomNum']; ?></td>
-                                <td><?php echo $report['Category']; ?></td>
-                                <td><?php echo date('M d, Y', strtotime($report['DateReported'])); ?></td>
-                                <td class="status-<?php echo $report['Status']; ?>"><?php echo ucfirst($report['Status']); ?></td>
-                                <td><a href="view_report.php?id=<?php echo $report['ReportID']; ?>">View</a></td>
-                            </tr>
-                        <?php endwhile; ?>
-                    <?php else: ?>
+
+            <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <h2 style="margin-bottom: 20px; color: #333;">📊 Recent Reports Management</h2>
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td colspan="6" style="text-align: center;">No reports found</td>
+                            <th>Report ID</th>
+                            <th>Location</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Manage Status</th>
                         </tr>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        <?php if (mysqli_num_rows($recent_result) > 0): ?>
+                            <?php while($report = mysqli_fetch_assoc($recent_result)): ?>
+                                <tr>
+                                    <td><strong>#<?php echo $report['ReportID']; ?></strong></td>
+                                    <td><?php echo htmlspecialchars($report['BuildingName'] . ' - ' . $report['ClassRoomNum']); ?></td>
+                                    <td><?php echo htmlspecialchars($report['Category']); ?></td>
+                                    <td>
+                                        <span class="badge status-<?php echo $report['Status']; ?>">
+                                            <?php echo $report['Status']; ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form method="POST" style="display: flex; gap: 5px;">
+                                            <input type="hidden" name="report_id" value="<?php echo $report['ReportID']; ?>">
+                                            <select name="status" style="padding: 4px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px;">
+                                                <option value="pending" <?php echo ($report['Status'] == 'pending') ? 'selected' : ''; ?>>Pending</option>
+                                                <option value="in-progress" <?php echo ($report['Status'] == 'in-progress') ? 'selected' : ''; ?>>In Progress</option>
+                                                <option value="resolved" <?php echo ($report['Status'] == 'resolved') ? 'selected' : ''; ?>>Resolved</option>
+                                            </select>
+                                            <button type="submit" name="update_status" class="btn-update">Update</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #999; padding: 30px;">📭 No reports found.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </main>
     </div>
 
-    <footer class="main-footer">
-        © 2026 Cebu Institute of Technology - University<br>
-        Damage Reporting System | For authorized personnel only
-    </footer>
-
-    
 </body>
 </html>
-
-<?php include 'includes/footer.php'; ?>
