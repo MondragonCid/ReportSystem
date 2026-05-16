@@ -22,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if ($user["UserType"] == "admin") {
                 header("Location: admin/dashboard.php");
+            } elseif ($user["UserType"] == "staff") {
+                header("Location: staff/dashboard.php");
             } else {
                 header("Location: dashboard.php");
             }
@@ -42,44 +44,60 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - CIT University Fault Report Process</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            margin: 0;
             font-family: Arial, sans-serif;
             background-color: #f4f4f6;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 30px 20px;
         }
+
+        /* FIX: constrain header width to match the card, and center properly */
         .header-logo {
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 16px;
+            gap: 14px;
         }
+
+        /* FIX: give logo a fixed size so it doesn't collapse if image fails to load */
         .header-logo img {
-            height: 60px;
-            margin-right: 15px;
+            height: 64px;
+            width: 64px;
+            object-fit: contain;
+            flex-shrink: 0;
         }
+
         .header-logo h1 {
             color: #7b181b;
-            font-size: 20px;
-            line-height: 1.2;
-            margin: 0;
+            font-size: 18px;
+            line-height: 1.3;
+            font-weight: bold;
         }
+
         .login-container {
             background-color: white;
-            padding: 40px;
+            padding: 35px 40px;
             border-radius: 10px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 400px;
         }
+
         .instructions {
             font-size: 14px;
-            color: #333;
+            color: #555;
             margin-bottom: 20px;
+            line-height: 1.5;
         }
+
         .alert {
             padding: 10px;
             background-color: #f8d7da;
@@ -90,28 +108,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-size: 13px;
             text-align: center;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         .form-group label {
             display: block;
             font-size: 14px;
             font-weight: bold;
             margin-bottom: 5px;
+            color: #333;
         }
+
         .form-group input {
             width: 100%;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box;
+            font-size: 14px;
         }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #7b181b;
+            box-shadow: 0 0 0 2px rgba(123,24,27,0.1);
+        }
+
         .button-group {
             display: flex;
             justify-content: space-between;
             margin-top: 20px;
             gap: 10px;
         }
+
         .btn {
             flex: 1;
             padding: 12px;
@@ -121,54 +151,69 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-weight: bold;
             cursor: pointer;
             font-size: 13px;
+            transition: opacity 0.2s;
         }
-        .btn-clear {
-            background-color: #8c3b40;
-        }
-        .btn-login {
-            background-color: #7b181b;
-        }
+
+        .btn:hover { opacity: 0.88; }
+        .btn-clear { background-color: #8c3b40; }
+        .btn-login { background-color: #7b181b; }
+
         .footer-links {
-            margin-top: 20px;
+            margin-top: 18px;
             font-size: 13px;
-            text-align: left;
         }
+
         .footer-links a {
             color: #007bff;
             text-decoration: none;
         }
+
         .inquiries {
-            margin-top: 20px;
-            text-align: center;
+            margin-top: 14px;
             font-size: 13px;
-            color: #555;
-            line-height: 1.5;
+            color: #777;
+            line-height: 1.6;
+            text-align: center;
         }
+
         .test-accounts {
-            margin-top: 20px;
+            margin-top: 18px;
             padding-top: 15px;
             border-top: 1px solid #eee;
             font-size: 13px;
         }
+
         .test-accounts h4 {
-            margin: 0 0 10px 0;
+            margin-bottom: 8px;
             font-size: 14px;
             color: #333;
         }
+
         .test-accounts ul {
-            margin: 0;
-            padding-left: 20px;
+            margin: 0 0 12px 0;
+            padding-left: 18px;
             color: #444;
         }
-        .test-accounts li {
-            margin-bottom: 5px;
+
+        .test-accounts li { margin-bottom: 4px; }
+
+        .access-list {
+            list-style: none;
+            padding: 0;
+            margin: 6px 0 0 0;
+        }
+
+        .access-list li {
+            margin-bottom: 4px;
+            color: #444;
         }
     </style>
 </head>
 <body>
 
+    <!-- FIX: logo and title properly aligned and constrained to card width -->
     <div class="header-logo">
-        <img src="citu_logo.png" alt="CIT Logo">
+        <img src="citu_logo.png" alt="CIT-U Logo" onerror="this.style.display='none'">
         <h1>CIT University<br>Fault Report System</h1>
     </div>
 
@@ -176,7 +221,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <p class="instructions">Login using your CIT University credentials to access the Fault Report System.</p>
 
         <?php if ($error): ?>
-            <div class="alert"><?php echo $error; ?></div>
+            <div class="alert"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
         
         <form action="login.php" method="POST">
@@ -202,10 +247,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <div class="inquiries">
             For authorized CIT University personnel only<br>
-            Contact IT Department for account assistance<br>
+            Contact IT Department for account assistance
         </div>
 
-        <!-- Integrated Test Accounts section from your image -->
+        <!-- FIX: closed all tags properly -->
         <div class="test-accounts">
             <h4>Test Accounts:</h4>
             <ul>
@@ -215,11 +260,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <li><strong>Student:</strong> juan.student / admin123</li>
             </ul>
 
-            <p><strong> User Access Levels:</strong></p>
-                <ul style="list-style: none; padding-left: 0;">
-                    <li> <strong>Admin</strong> → Admin Dashboard (CRUD, Reports, Staff)</li>
-                    <li> <strong>Staff</strong> → Staff Dashboard (Assignments, Updates)</li>
-                    <li><strong>Student/Employee</strong> → Submit Reports, Track Status</li>
+            <strong>User Access Levels:</strong>
+            <ul class="access-list">
+                <li><strong>Admin</strong> → Admin Dashboard (CRUD, Reports, Staff)</li>
+                <li><strong>Staff</strong> → Staff Dashboard (Assignments, Updates)</li>
+                <li><strong>Student/Employee</strong> → Submit Reports, Track Status</li>
+            </ul>
         </div>
     </div>
 
