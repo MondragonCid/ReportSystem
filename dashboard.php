@@ -131,7 +131,7 @@ $recent_result = mysqli_query($conn, $recent_query);
         <div class="section">
             <h2>📝 Quick Actions</h2>
             <div style="display: flex; gap: 15px;">
-                <a href="report_damage.php" class="btn">➕ Report New Damage</a>
+                <a href="report_damage.php" class="btn"> Report New Damage</a>
                 <a href="my_reports.php" class="btn btn-secondary">📋 View All My Reports</a>
             </div>
         </div>
