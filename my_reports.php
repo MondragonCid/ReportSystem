@@ -7,7 +7,7 @@ $user_id = $_SESSION['user_id'];
 $user_type = $_SESSION['user_type'];
 $base_path = '';
 
-$query = "SELECT dr.*, l.BuildingName, l.ClassRoomNum 
+$query = "SELECT dr.*, l.BuildingName, l.ClassRoomNum
           FROM damage_report dr
           JOIN location l ON dr.LocationID = l.LocationID
           WHERE dr.ReporterID = '$user_id'
@@ -53,8 +53,13 @@ $result = mysqli_query($conn, $query);
         .status-cancelled { color: #e74c3c; font-weight: bold; }
 
         .empty-msg { text-align: center; padding: 40px; color: #888; font-size: 15px; }
-        .btn { display: inline-block; padding: 10px 20px; background: #800000; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .btn { display: inline-block; padding: 10px 20px; background: #800000; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; cursor: pointer; border: none; }
         .alert-success { background: #e8f5e9; border-left: 5px solid #4caf50; padding: 15px; border-radius: 4px; color: #2e7d32; margin-bottom: 20px; }
+        
+        /* Pagination Styles */
+        .pagination-container { display: none; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; }
+        .pagination-info { font-size: 14px; color: #555; font-weight: 500; }
+        .btn:disabled { background: #cccccc; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -79,7 +84,7 @@ $result = mysqli_query($conn, $query);
             <div class="section">
                 <h2>📋 My Report History</h2>
                 <?php if (mysqli_num_rows($result) > 0): ?>
-                <table class="data-table">
+                <table class="data-table" id="reportsTable">
                     <thead>
                         <tr>
                             <th>Report ID</th>
@@ -105,6 +110,13 @@ $result = mysqli_query($conn, $query);
                         <?php endwhile; ?>
                     </tbody>
                 </table>
+                
+                <div class="pagination-container" id="paginationControls">
+                    <button class="btn" id="prevBtn">Previous</button>
+                    <span class="pagination-info" id="pageInfo">Page 1 of 1</span>
+                    <button class="btn" id="nextBtn">Next</button>
+                </div>
+
                 <?php else: ?>
                     <div class="empty-msg">
                         <p>📭 You have no reports yet.</p>
@@ -115,5 +127,65 @@ $result = mysqli_query($conn, $query);
             </div>
         </main>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const table = document.getElementById('reportsTable');
+            if (!table) return; // Exit if no table is present (empty state)
+
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const rowsPerPage = 8; // Change this number to show more/less rows per page
+            let currentPage = 1;
+            const totalPages = Math.ceil(rows.length / rowsPerPage);
+
+            const paginationControls = document.getElementById('paginationControls');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const pageInfo = document.getElementById('pageInfo');
+
+            // Only show pagination if there is more than 1 page
+            if (totalPages > 1) {
+                paginationControls.style.display = 'flex';
+            }
+
+            function displayRows() {
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+
+                // Loop through all rows and hide/show based on current page
+                rows.forEach((row, index) => {
+                    if (index >= start && index < end) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Update text and button states
+                pageInfo.innerText = `Page ${currentPage} of ${totalPages}`;
+                prevBtn.disabled = currentPage === 1;
+                nextBtn.disabled = currentPage === totalPages;
+            }
+
+            // Button Event Listeners
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayRows();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayRows();
+                }
+            });
+
+            // Initialize the first view
+            displayRows();
+        });
+    </script>
 </body>
 </html>

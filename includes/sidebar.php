@@ -12,7 +12,6 @@ $active_home       = ($current_file == 'index.php') ? 'active' : '';
 $active_dashboard  = ($current_file == 'dashboard.php') ? 'active' : '';
 $active_report     = ($current_file == 'report_damage.php') ? 'active' : '';
 $active_myreports  = ($current_file == 'my_reports.php') ? 'active' : '';
-$active_mytasks    = (strpos($_SERVER['PHP_SELF'], '/staff/') !== false && $current_file == 'dashboard.php') ? 'active' : '';
 $active_admin      = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false && $current_file != 'dashboard.php') ? 'active' : '';
 $active_locations  = (strpos($_SERVER['PHP_SELF'], '/locations/') !== false) ? 'active' : '';
 

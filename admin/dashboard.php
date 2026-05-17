@@ -75,7 +75,7 @@ $stats_query = "SELECT
 $stats_result = mysqli_query($conn, $stats_query);
 $stats = mysqli_fetch_assoc($stats_result);
 
-// All reports
+// ORIGINAL PHP QUERY UNTOUCHED
 $reports_query = "SELECT dr.*, 
                   CONCAT(u.FirstName, ' ', u.LastName) as ReporterName,
                   CONCAT(l.BuildingName, ' - ', l.ClassRoomNum) as LocationName,
@@ -109,16 +109,16 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
     <title>Admin Dashboard - CIT Damage Reporting</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body, html { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9f9f9; }
-        .main-wrapper { display: flex; min-height: 100vh; }
+        body, html { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9f9f9; overflow-x: hidden; }
+        .main-wrapper { display: flex; min-height: 100vh; width: 100%; }
 
-        .sidebar { width: 250px; background-color: #800000; color: white; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
+        .sidebar { width: 250px; background-color: #800000; color: white; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; flex-shrink: 0; }
         .sidebar-brand { padding: 25px; font-weight: bold; font-size: 14px; text-align: center; background-color: #600000; }
         .nav-item { padding: 15px 20px; color: white; text-decoration: none; font-size: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); transition: 0.2s; display: block; }
         .nav-item:hover, .nav-item.active { background-color: #a00000; padding-left: 30px; }
         .nav-item.logout-btn { margin-top: auto; background-color: rgba(0,0,0,0.2); border-top: 1px solid rgba(255,255,255,0.1); }
 
-        .content-area { flex: 1; padding: 40px; overflow-y: auto; }
+        .content-area { flex: 1; padding: 40px; overflow-y: auto; min-width: 0; }
         .header-container { display: flex; align-items: center; margin-bottom: 5px; }
         .logo { height: 60px; margin-right: 15px; }
         .header-text h1 { color: #800000; font-size: 24px; text-transform: uppercase; margin: 0; }
@@ -136,30 +136,42 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
         .filter-bar { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; display: flex; gap: 10px; border: 1px solid #ddd; }
         .filter-bar input, .filter-bar select { padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
 
-        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .data-table th { background: #f8f9fa; padding: 12px 15px; text-align: left; border-bottom: 2px solid #eee; font-size: 13px; }
-        .data-table td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: middle; }
+        /* SCROLL-PROOF UNIFORM TABLE CONFIGURATION */
+        .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); table-layout: fixed; }
+        .data-table th { background: #f8f9fa; padding: 12px 10px; text-align: left; border-bottom: 2px solid #eee; font-size: 13px; }
+        .data-table td { padding: 12px 10px; border-bottom: 1px solid #eee; font-size: 13px; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; }
         .data-table tr:hover { background: #fafafa; }
 
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
+        /* Custom Sizing Matrix Safeguarding Actions Field */
+        .col-id { width: 4%; }
+        .col-reporter { width: 12%; }
+        .col-location { width: 14%; }
+        .col-category { width: 16%; }
+        .col-desc { width: 11%; }
+        .col-staff { width: 14%; }
+        .col-status { width: 10%; }
+        .col-actions { width: 19%; } 
+
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; display: inline-block; text-align: center; width: 100%; }
         .badge-pending   { background: #f39c12; }
         .badge-progress  { background: #3498db; }
         .badge-resolved  { background: #27ae60; }
         .badge-cancelled { background: #e74c3c; }
 
-        /* Assign Staff Button */
-        .btn-assign { background: #800000; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap; }
+        .btn-assign { background: #800000; color: white; border: none; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap; display: block; width: 100%; text-align: center; text-overflow: ellipsis; overflow: hidden; transition: 0.2s; }
         .btn-assign:hover { background: #600000; }
-        .btn-assign.assigned { background: #27ae60; }
-        .btn-assign.assigned:hover { background: #1e8449; }
+        .btn-assign.assigned { background: #28a745; }
+        .btn-assign.assigned:hover { background: #218838; }
 
-        .btn-save   { background: #28a745; color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .btn-delete { background: #dc3545; color: white; text-decoration: none; padding: 7px 12px; border-radius: 4px; font-size: 12px; display: inline-block; }
+        .btn-save   { background: #28a745; color: white; border: none; padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; flex-shrink: 0; transition: 0.2s; }
+        .btn-save:hover { background: #218838; }
+        .btn-delete { background: #dc3545; color: white; border: none; padding: 7px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; display: inline-block; flex-shrink: 0; transition: 0.2s; }
+        .btn-delete:hover { background: #c82333; }
 
         .alert-success { background: #e8f5e9; border-left: 5px solid #4caf50; padding: 12px 15px; border-radius: 4px; color: #2e7d32; margin-bottom: 20px; }
 
-        /* MODAL */
-        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        /* MODAL styles */
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
         .modal { background: white; border-radius: 10px; padding: 30px; width: 440px; max-width: 95vw; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .modal h3 { color: #800000; margin-bottom: 5px; font-size: 18px; }
@@ -179,10 +191,18 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
         .unassign-option span { font-size: 13px; color: #888; font-style: italic; }
 
         .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
-        .btn-modal-save   { background: #800000; color: white; border: none; padding: 10px 22px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn-modal-save   { background: #800000; color: white; border: none; padding: 10px 22px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; text-align: center; }
         .btn-modal-save:hover { background: #600000; }
+        .btn-modal-delete { background: #dc3545; color: white; border: none; padding: 10px 22px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; text-align: center; }
+        .btn-modal-delete:hover { background: #c82333; }
         .btn-modal-cancel { background: #eee; color: #333; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-size: 14px; }
         .btn-modal-cancel:hover { background: #ddd; }
+
+        .pagination-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; }
+        .btn-page { background: #800000; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; }
+        .btn-page:hover { background: #600000; }
+        .btn-page:disabled { background: #ccc; cursor: not-allowed; }
+        .page-info { font-size: 14px; color: #555; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -229,7 +249,7 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
             </div>
         </div>
 
-        <div style="background: white; padding: 25px; border-radius: 10px; border: 1px solid #ddd;">
+        <div style="background: white; padding: 25px; border-radius: 10px; border: 1px solid #ddd; width: 100%;">
             <h2 style="margin-bottom: 15px;">📋 All Damage Reports</h2>
             <div class="filter-bar">
                 <input type="text" id="searchInput" placeholder="🔍 Search reports..." onkeyup="filterTable()" style="flex: 1;">
@@ -238,23 +258,24 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
                     <option value="pending">Pending</option>
                     <option value="in-progress">In Progress</option>
                     <option value="resolved">Resolved</option>
+                    <option value="cancelled">Cancelled</option>
                 </select>
             </div>
 
             <table class="data-table" id="reportsTable">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Reporter</th>
-                        <th>Location</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Assigned Staff</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th class="col-id">ID</th>
+                        <th class="col-reporter">Reporter</th>
+                        <th class="col-location">Location</th>
+                        <th class="col-category">Category</th>
+                        <th class="col-desc">Description</th>
+                        <th class="col-staff">Assigned Staff</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-actions">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     <?php if (mysqli_num_rows($reports_result) > 0): ?>
                         <?php while($report = mysqli_fetch_assoc($reports_result)): ?>
                             <tr class="report-row" data-status="<?= $report['Status'] ?>">
@@ -264,20 +285,16 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
                                 <td><?= htmlspecialchars($report['Category']) ?></td>
                                 <td><?= htmlspecialchars(substr($report['Description'], 0, 35)) ?>...</td>
 
-                                <!-- ASSIGN STAFF COLUMN -->
                                 <td>
                                     <?php if ($report['StaffName']): ?>
-                                        <div style="margin-bottom: 4px;">
-                                            <span style="font-size: 12px; color: #2e7d32; font-weight: bold;">✅ <?= htmlspecialchars($report['StaffName']) ?></span>
-                                        </div>
-                                        <button class="btn-assign assigned"
+                                        <button class="btn-assign assigned" title="Click to reassign"
                                             onclick="openAssignModal(<?= $report['ReportID'] ?>, '<?= htmlspecialchars($report['StaffName']) ?>', <?= $report['StaffUserID'] ?? 'null' ?>)">
-                                            ✏️ Reassign
+                                            👤 <?= htmlspecialchars($report['StaffName']) ?>
                                         </button>
                                     <?php else: ?>
                                         <button class="btn-assign"
                                             onclick="openAssignModal(<?= $report['ReportID'] ?>, null, null)">
-                                            👤 Assign Staff
+                                            Assign Staff
                                         </button>
                                     <?php endif; ?>
                                 </td>
@@ -289,17 +306,18 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
                                 </td>
 
                                 <td>
-                                    <form method="POST" style="display: flex; gap: 5px; align-items: center;">
+                                    <form method="POST" style="display: flex; gap: 5px; align-items: center; width: 100%;">
                                         <input type="hidden" name="report_id" value="<?= $report['ReportID'] ?>">
                                         <input type="hidden" name="staff_id" value="<?= $report['StaffUserID'] ?? '' ?>">
-                                        <select name="status" style="font-size: 11px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+                                        <select name="status" style="font-size: 11px; padding: 5px 2px; border: 1px solid #ddd; border-radius: 4px; flex: 1; min-width: 0;">
                                             <option value="pending"     <?= $report['Status'] == 'pending'     ? 'selected' : '' ?>>Pending</option>
                                             <option value="in-progress" <?= $report['Status'] == 'in-progress' ? 'selected' : '' ?>>In Progress</option>
                                             <option value="resolved"    <?= $report['Status'] == 'resolved'    ? 'selected' : '' ?>>Resolved</option>
                                             <option value="cancelled"   <?= $report['Status'] == 'cancelled'   ? 'selected' : '' ?>>Cancelled</option>
                                         </select>
                                         <button type="submit" name="update_status" class="btn-save">Save</button>
-                                        <a href="?delete=<?= $report['ReportID'] ?>" class="btn-delete" onclick="return confirm('Delete report #<?= $report['ReportID'] ?>?')">🗑️</a>
+                                        
+                                        <button type="button" class="btn-delete" onclick="openDeleteModal(<?= $report['ReportID'] ?>)">🗑️</button>
                                     </form>
                                 </td>
                             </tr>
@@ -307,11 +325,17 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
                     <?php endif; ?>
                 </tbody>
             </table>
+            
+            <div class="pagination-container">
+                <button class="btn-page" id="btnPrev" onclick="prevPage()">❮ Previous</button>
+                <span id="pageInfo" class="page-info">Page 1 of 1</span>
+                <button class="btn-page" id="btnNext" onclick="nextPage()">Next ❯</button>
+            </div>
+
         </div>
     </main>
 </div>
 
-<!-- ASSIGN STAFF MODAL -->
 <div class="modal-overlay" id="assignModal">
     <div class="modal">
         <h3>👤 Assign Staff</h3>
@@ -322,18 +346,16 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
             <input type="hidden" name="report_id" id="modal_report_id">
             <input type="hidden" name="assign_staff" value="1">
 
-            <!-- Unassign option -->
             <label class="unassign-option">
                 <input type="radio" name="staff_id" value="" id="radio_unassign">
-                <span>🚫 Remove assignment (Unassigned)</span>
+                <span>Remove assignment (Unassigned)</span>
             </label>
 
-            <!-- Staff options -->
             <?php foreach ($staff_list as $staff): ?>
                 <label class="staff-option" onclick="selectStaff(this)">
                     <input type="radio" name="staff_id" value="<?= $staff['UserID'] ?>" data-id="<?= $staff['UserID'] ?>">
                     <div>
-                        <div class="staff-name">👷 <?= htmlspecialchars($staff['StaffName']) ?></div>
+                        <div class="staff-name"><?= htmlspecialchars($staff['StaffName']) ?></div>
                         <div class="staff-spec">Specialization: <?= htmlspecialchars($staff['Specialization'] ?? 'General') ?></div>
                     </div>
                 </label>
@@ -351,7 +373,98 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
     </div>
 </div>
 
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal" style="width: 380px; text-align: center;">
+        <h3 style="color: #dc3545; font-size: 22px;">Delete Report?</h3>
+        <p class="modal-sub" id="deleteModalText" style="margin-top: 15px; font-size: 14px; color: #555;">Are you sure you want to delete this report? This action cannot be undone.</p>
+        <hr class="modal-divider" style="margin: 20px 0;">
+        
+        <div class="modal-actions" style="justify-content: center; gap: 15px; margin-top: 0;">
+            <button type="button" class="btn-modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <a href="#" id="confirmDeleteBtn" class="btn-modal-delete">Yes, Delete It</a>
+        </div>
+    </div>
+</div>
+
 <script>
+    // Exact status hierarchy mapping matrix 
+    const statusPriority = { 'pending': 1, 'in-progress': 2, 'resolved': 3, 'cancelled': 4 };
+
+    const rowsPerPage = 5; 
+    let currentPage = 1;
+    let masterRowsArray = [];
+    let filteredRows = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Capture ALL rows printed out by PHP into a persistent master array
+        masterRowsArray = Array.from(document.querySelectorAll('#reportsTable tbody tr.report-row'));
+        
+        // Execute primary global sort & build initial table layout view
+        filterTable();
+    });
+
+    function filterTable() {
+        const searchValue = document.getElementById('searchInput').value.toLowerCase();
+        const statusValue = document.getElementById('statusFilter').value;
+
+        // 1. Filter against master list elements
+        filteredRows = masterRowsArray.filter(row => {
+            const text = row.innerText.toLowerCase();
+            const status = row.getAttribute('data-status');
+            return (text.includes(searchValue) && (statusValue === 'all' || status === statusValue));
+        });
+
+        // 2. Sort the entire matching subset globally BEFORE slicing pages
+        filteredRows.sort((a, b) => {
+            const orderA = statusPriority[a.getAttribute('data-status')] || 99;
+            const orderB = statusPriority[b.getAttribute('data-status')] || 99;
+            return orderA - orderB;
+        });
+
+        currentPage = 1; 
+        updateTableDisplay();
+    }
+
+    function updateTableDisplay() {
+        const tableBody = document.getElementById('tableBody');
+        
+        // Detach all rows visually
+        masterRowsArray.forEach(row => row.style.display = 'none');
+
+        // Calculate strict subset ranges
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+
+        // Append and display only elements falling inside the targeted page chunk
+        for (let i = startIndex; i < endIndex && i < filteredRows.length; i++) {
+            const row = filteredRows[i];
+            row.style.display = '';
+            tableBody.appendChild(row); // Physically re-appends row to enforce sorted structure inside Dom
+        }
+
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+        document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
+        
+        document.getElementById('btnPrev').disabled = currentPage === 1;
+        document.getElementById('btnNext').disabled = currentPage === totalPages;
+    }
+
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            updateTableDisplay();
+        }
+    }
+
+    function nextPage() {
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+        if (currentPage < totalPages) {
+            currentPage++;
+            updateTableDisplay();
+        }
+    }
+
+    // --- ASSIGN STAFF MODAL LOGIC ---
     function openAssignModal(reportId, currentStaffName, currentStaffId) {
         document.getElementById('modal_report_id').value = reportId;
 
@@ -362,7 +475,6 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
             subtitle.textContent = 'Report #' + reportId + ' — Currently unassigned.';
         }
 
-        // Pre-select current staff if assigned
         const radios = document.querySelectorAll('#assignForm input[type="radio"]');
         radios.forEach(r => {
             r.checked = false;
@@ -392,20 +504,26 @@ while ($staff = mysqli_fetch_assoc($staff_result)) {
         label.classList.add('selected');
     }
 
-    // Close modal when clicking outside
+    // --- DELETE CONFIRMATION MODAL LOGIC ---
+    function openDeleteModal(reportId) {
+        document.getElementById('deleteModalText').textContent = 'Are you sure you want to delete Report #' + reportId + '? This action cannot be undone.';
+        // Set the href of the confirm button to execute the PHP GET request
+        document.getElementById('confirmDeleteBtn').href = '?delete=' + reportId;
+        document.getElementById('deleteModal').classList.add('active');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('active');
+    }
+
+    // Close modals when clicking outside the box
     document.getElementById('assignModal').addEventListener('click', function(e) {
         if (e.target === this) closeAssignModal();
     });
-
-    function filterTable() {
-        const searchValue = document.getElementById('searchInput').value.toLowerCase();
-        const statusValue = document.getElementById('statusFilter').value;
-        document.querySelectorAll('#reportsTable tbody tr').forEach(row => {
-            const text = row.innerText.toLowerCase();
-            const status = row.getAttribute('data-status');
-            row.style.display = (text.includes(searchValue) && (statusValue === 'all' || status === statusValue)) ? '' : 'none';
-        });
-    }
+    
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteModal();
+    });
 </script>
 </body>
 </html>
